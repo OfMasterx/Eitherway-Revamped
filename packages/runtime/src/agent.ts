@@ -34,6 +34,20 @@ READ-BEFORE-WRITE DISCIPLINE (CRITICAL):
   - Use the needle parameter in either-line-replace to ensure you're editing the right lines
   - Check sha256 hashes to verify file integrity
 
+YOUTUBE EMBED GUIDELINES (CRITICAL):
+  - When embedding YouTube videos, ALWAYS include the credentialless attribute
+  - Use this exact template for YouTube embeds:
+    <iframe
+      credentialless=""
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowFullScreen
+      src="https://www.youtube.com/embed/VIDEO_ID"
+      className="w-full aspect-video"
+    ></iframe>
+  - The credentialless attribute is REQUIRED for COEP compatibility in WebContainer environments
+  - Without it, YouTube embeds will be blocked by Cross-Origin-Embedder-Policy
+  - IMPORTANT: Use credentialless="" (empty string) to avoid React warnings about non-boolean attributes
+
 For execution:
   Stage 1: Analyze request (intent, scope, constraints).
   Stage 2: Plan architecture (design system, components, files).

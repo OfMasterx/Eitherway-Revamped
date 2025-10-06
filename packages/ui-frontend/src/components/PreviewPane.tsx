@@ -380,6 +380,9 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
           }
 
           setServerStatus('Starting dev server...');
+          // Mark server as started BEFORE spawning to prevent duplicate starts
+          serverStartedRef.current = true;
+
           // Start dev server
           const devProcess = await containerRef.current.spawn('npm', ['run', 'dev']);
 
@@ -389,8 +392,6 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
               console.log('[npm run dev]', data);
             }
           }));
-
-          serverStartedRef.current = true;
         } else if ((hasIndexHtml || anyHtmlFile) && containerRef.current && !isTearingDownRef.current && operationSessionId === sessionId) {
           setServerStatus('Starting static server...');
           // For simple HTML apps, start a static server using Node.js http-server
@@ -455,6 +456,9 @@ server.listen(PORT, () => {
 
           await containerRef.current.fs.writeFile('/server.js', serverScript);
 
+          // Mark server as started BEFORE spawning to prevent duplicate starts
+          serverStartedRef.current = true;
+
           // Start the static server
           const serverProcess = await containerRef.current.spawn('node', ['server.js']);
 
@@ -465,7 +469,6 @@ server.listen(PORT, () => {
               // Check if server started message appears
               if (data.includes('Server running on port') || data.includes('3000')) {
                 setServerStatus('Server started on port 3000');
-                serverStartedRef.current = true;
               }
             }
           }));
@@ -558,7 +561,8 @@ server.listen(PORT, () => {
                     className="preview-frame-mobile"
                     src={previewUrl}
                     title="Preview"
-                    allow="autoplay; encrypted-media; fullscreen; accelerometer; gyroscope; clipboard-write; web-share"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+                    allow="autoplay; encrypted-media; fullscreen; accelerometer; gyroscope; clipboard-write; web-share; picture-in-picture"
                     onLoad={() => setIframeLoaded(true)}
                     style={{
                       opacity: (loading || !iframeLoaded) ? 0 : 1,
@@ -614,7 +618,8 @@ server.listen(PORT, () => {
                 className="preview-frame"
                 src={previewUrl}
                 title="Preview"
-                allow="autoplay; encrypted-media; fullscreen; accelerometer; gyroscope; clipboard-write; web-share"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+                allow="autoplay; encrypted-media; fullscreen; accelerometer; gyroscope; clipboard-write; web-share; picture-in-picture"
                 onLoad={() => setIframeLoaded(true)}
                 style={{
                   position: 'absolute',
