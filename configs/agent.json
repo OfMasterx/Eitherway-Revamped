@@ -49,5 +49,43 @@
       "defaultSize": "1024x1024",
       "supportedProviders": ["openai", "stability", "fal", "replicate", "custom"]
     }
+  },
+  "stack": {
+    "framework": "react",
+    "language": "typescript",
+    "build": "vite",
+    "ui": ["tailwind", "shadcn"],
+    "router": "none",
+    "state": "none"
+  },
+  "enforcement": {
+    "disallowDeps": [
+      "next",
+      "vue",
+      "nuxt",
+      "angular",
+      "svelte",
+      "solid-js"
+    ],
+    "requireDeps": {
+      "react": ">=18",
+      "react-dom": ">=18",
+      "vite": ">=7",
+      "typescript": ">=5",
+      "tailwindcss": ">=3"
+    },
+    "requireFiles": [
+      "package.json",
+      "vite.config.ts",
+      "tailwind.config.ts",
+      "postcss.config.cjs",
+      "tsconfig.json",
+      ".eslintrc.cjs",
+      ".prettierrc",
+      "src/main.tsx",
+      "src/App.tsx",
+      "src/index.css",
+      "index.html"
+    ]
   }
 }

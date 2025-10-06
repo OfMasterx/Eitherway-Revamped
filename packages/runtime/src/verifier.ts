@@ -4,8 +4,9 @@
  */
 
 import { spawn } from 'child_process';
-import { readFile } from 'fs/promises';
-import { resolve } from 'path';
+import { readFile, access } from 'fs/promises';
+import { resolve, dirname, join } from 'path';
+import { autofixMissingFiles, formatAutofixResult } from './stack-autofix.js';
 
 export interface VerifyStep {
   name: string;
@@ -18,6 +19,88 @@ export interface VerifyResult {
   steps: VerifyStep[];
   passed: boolean;
   totalDuration: number;
+}
+
+interface StackRules {
+  disallowDeps: string[];
+  requireDeps: Record<string, string>;
+  requireFiles: string[];
+}
+
+/**
+ * Check React + Vite stack conformance with optional autofix
+ */
+async function checkReactViteStack(
+  workingDir: string,
+  rules: StackRules,
+  autofix: boolean = true
+): Promise<VerifyStep> {
+  try {
+    const pkgPath = resolve(workingDir, 'package.json');
+    const pkgContent = await readFile(pkgPath, 'utf-8');
+    const pkg = JSON.parse(pkgContent);
+
+    // Check for missing required files
+    const missingFiles: string[] = [];
+    for (const rel of rules.requireFiles) {
+      try {
+        await access(resolve(workingDir, rel));
+      } catch {
+        missingFiles.push(rel);
+      }
+    }
+
+    // Attempt to autofix missing files
+    let autofixOutput = '';
+    if (autofix && missingFiles.length > 0) {
+      // Scaffold path: ../../../../templates/react-vite-starter (from runtime/dist)
+      const scaffoldPath = join(dirname(workingDir), '..', 'templates', 'react-vite-starter');
+      const fixResult = await autofixMissingFiles(workingDir, missingFiles, scaffoldPath);
+      autofixOutput = formatAutofixResult(fixResult);
+
+      // Remove successfully fixed files from missing list
+      for (const fixed of fixResult.filesFixed) {
+        const index = missingFiles.indexOf(fixed);
+        if (index > -1) {
+          missingFiles.splice(index, 1);
+        }
+      }
+    }
+
+    // Check for missing required dependencies
+    const missingDeps = Object.entries(rules.requireDeps)
+      .filter(([name, _]) => !pkg.dependencies?.[name] && !pkg.devDependencies?.[name])
+      .map(([name]) => name);
+
+    // Check for forbidden dependencies
+    const forbidden = (dep: string) =>
+      pkg.dependencies?.[dep] || pkg.devDependencies?.[dep];
+
+    const badDeps = rules.disallowDeps.filter(forbidden);
+
+    // Determine if stack is conformant
+    const ok = missingFiles.length === 0 && missingDeps.length === 0 && badDeps.length === 0;
+
+    // Build detailed output
+    const details = [
+      autofixOutput,
+      missingFiles.length ? `Missing required files: ${missingFiles.join(', ')}` : '',
+      missingDeps.length ? `Missing required dependencies: ${missingDeps.join(', ')} - Add these to package.json` : '',
+      badDeps.length ? `Forbidden dependencies found: ${badDeps.join(', ')} - Remove these and use React+Vite instead` : ''
+    ].filter(Boolean).join('\n\n');
+
+    return {
+      name: 'Stack Conformance (React+Vite)',
+      ok,
+      output: ok ? '✓ Stack conforms to React 18 + TypeScript + Vite + Tailwind' : details
+    };
+  } catch (e: any) {
+    return {
+      name: 'Stack Conformance (React+Vite)',
+      ok: false,
+      output: `Error checking stack conformance: ${e.message}`
+    };
+  }
 }
 
 export class VerifierRunner {
@@ -39,6 +122,34 @@ export class VerifierRunner {
     }
 
     const steps: VerifyStep[] = [];
+
+    // Check stack conformance FIRST (before any other checks)
+    if (pkg) {
+      try {
+        const agentCfgPath = resolve(this.workingDir, '../configs/agent.json');
+        const agentCfgContent = await readFile(agentCfgPath, 'utf-8');
+        const agentCfg = JSON.parse(agentCfgContent);
+
+        if (agentCfg?.enforcement) {
+          const stepStart = Date.now();
+          const stackCheck = await checkReactViteStack(this.workingDir, agentCfg.enforcement);
+          stackCheck.duration = Date.now() - stepStart;
+          steps.push(stackCheck);
+
+          // If stack check fails, stop verification immediately
+          if (!stackCheck.ok) {
+            return {
+              steps,
+              passed: false,
+              totalDuration: Date.now() - startTime
+            };
+          }
+        }
+      } catch (e: any) {
+        // If we can't load agent config, log warning but continue
+        console.warn(`Could not load agent config for stack verification: ${e.message}`);
+      }
+    }
 
     if (pkg) {
       // Node.js project - run available scripts in order

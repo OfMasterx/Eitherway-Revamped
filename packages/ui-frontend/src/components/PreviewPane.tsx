@@ -30,8 +30,9 @@ async function getWebContainer(): Promise<WebContainer> {
   return webContainerInstance;
 }
 
-// Helper to tear down WebContainer completely
-async function tearDownWebContainer() {
+// Helper to tear down WebContainer completely (reserved for future use)
+// @ts-expect-error - Reserved for future use
+async function _tearDownWebContainer() {
   if (webContainerInstance) {
     try {
       console.log('[WebContainer] Tearing down container...');
@@ -82,7 +83,8 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
     setIframeLoaded(false);
   }, [previewUrl]);
 
-  const handleRefresh = () => {
+  // @ts-expect-error - Reserved for future use
+  const _handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
     setIframeLoaded(false);
   };
@@ -116,21 +118,23 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
             onUrlChange('');
           }
 
-          // Teardown old container as fast as possible (no delay)
+          // Teardown old container as fast as possible
           isTearingDownRef.current = true;
           containerRef.current = null; // Clear ref immediately
 
-          // Teardown without logging/delay to minimize switch time
+          // Teardown and wait for it to complete
           if (webContainerInstance) {
             try {
-              // Fire and forget - teardown happens quickly in background
-              webContainerInstance.teardown().catch(() => {});
+              console.log('[PreviewPane] Tearing down old container...');
+              webContainerInstance.teardown();
+              // Give teardown a moment to complete to prevent "Process aborted" errors
+              await new Promise(resolve => setTimeout(resolve, 100));
             } catch (err) {
-              // Ignore errors, just continue
+              console.warn('[PreviewPane] Error during teardown:', err);
             }
           }
 
-          // Reset globals immediately
+          // Reset globals after teardown completes
           webContainerInstance = null;
           bootPromise = null;
           currentRunningSessionId = null;
@@ -306,21 +310,24 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
     };
 
     const syncAndRun = async () => {
+      // Capture the current session ID at the start of this operation
+      const operationSessionId = sessionId;
+
       try {
         setLoading(true);
 
-        // Check if container is still valid before syncing
-        if (isTearingDownRef.current || !containerRef.current) {
-          console.log('[PreviewPane] Container no longer valid, aborting sync');
+        // Check if container is still valid and session hasn't changed
+        if (isTearingDownRef.current || !containerRef.current || operationSessionId !== sessionId) {
+          console.log('[PreviewPane] Container no longer valid or session changed, aborting sync');
           return;
         }
 
         // Sync files to WebContainer
         const fileTree = await syncFilesToContainer(files);
 
-        // Check again after async operation
-        if (isTearingDownRef.current || !containerRef.current) {
-          console.log('[PreviewPane] Container torn down during sync, aborting');
+        // Check again after async operation - session might have changed
+        if (isTearingDownRef.current || !containerRef.current || operationSessionId !== sessionId) {
+          console.log('[PreviewPane] Container torn down or session changed during sync, aborting');
           return;
         }
 
@@ -354,12 +361,12 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
           indexPath: hasIndexHtml?.path || anyHtmlFile?.path
         });
 
-        if (hasPackageJson && containerRef.current && !isTearingDownRef.current) {
+        if (hasPackageJson && containerRef.current && !isTearingDownRef.current && operationSessionId === sessionId) {
           setServerStatus('Installing dependencies...');
 
           // Check before each operation
-          if (!containerRef.current || isTearingDownRef.current) {
-            console.log('[PreviewPane] Container torn down, aborting npm install');
+          if (!containerRef.current || isTearingDownRef.current || operationSessionId !== sessionId) {
+            console.log('[PreviewPane] Container torn down or session changed, aborting npm install');
             return;
           }
 
@@ -367,8 +374,8 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
           const installProcess = await containerRef.current.spawn('npm', ['install']);
           await installProcess.exit;
 
-          if (!containerRef.current || isTearingDownRef.current) {
-            console.log('[PreviewPane] Container torn down, aborting npm run dev');
+          if (!containerRef.current || isTearingDownRef.current || operationSessionId !== sessionId) {
+            console.log('[PreviewPane] Container torn down or session changed, aborting npm run dev');
             return;
           }
 
@@ -384,7 +391,7 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
           }));
 
           serverStartedRef.current = true;
-        } else if ((hasIndexHtml || anyHtmlFile) && containerRef.current && !isTearingDownRef.current) {
+        } else if ((hasIndexHtml || anyHtmlFile) && containerRef.current && !isTearingDownRef.current && operationSessionId === sessionId) {
           setServerStatus('Starting static server...');
           // For simple HTML apps, start a static server using Node.js http-server
           // Find the directory containing the HTML file
@@ -394,8 +401,8 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
 
           console.log('[PreviewPane] Starting static server for:', indexPath, 'baseDir:', baseDir);
 
-          if (!containerRef.current || isTearingDownRef.current) {
-            console.log('[PreviewPane] Container torn down, aborting static server');
+          if (!containerRef.current || isTearingDownRef.current || operationSessionId !== sessionId) {
+            console.log('[PreviewPane] Container torn down or session changed, aborting static server');
             return;
           }
 
@@ -469,7 +476,8 @@ server.listen(PORT, () => {
 
           // Set a timeout to check server URL after giving it time to start
           setTimeout(async () => {
-            if (containerRef.current && serverStartedRef.current) {
+            // Check if session is still the same before proceeding
+            if (containerRef.current && serverStartedRef.current && operationSessionId === sessionId) {
               try {
                 const container = containerRef.current as any;
 

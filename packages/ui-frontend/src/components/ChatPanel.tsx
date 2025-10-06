@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  content: string | { text?: string; type?: string } | any;
   error?: boolean;
 }
 
@@ -10,6 +10,41 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   disabled?: boolean;
+}
+
+// Helper to extract text from different content formats
+function extractMessageText(content: any): string {
+  if (!content) return '';
+
+  // If it's already a string, return it
+  if (typeof content === 'string') {
+    return content;
+  }
+
+  // If it's an object with a 'text' property
+  if (typeof content === 'object' && content.text) {
+    return content.text;
+  }
+
+  // If it's an array, extract text from each item
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item.type === 'text' && item.text) return item.text;
+        if (item.text) return item.text;
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  // Fallback: try to stringify
+  try {
+    return JSON.stringify(content, null, 2);
+  } catch {
+    return '[Unable to display message]';
+  }
 }
 
 export default function ChatPanel({ messages, onSendMessage, disabled }: ChatPanelProps) {
@@ -54,7 +89,7 @@ export default function ChatPanel({ messages, onSendMessage, disabled }: ChatPan
             className={`chat-message ${msg.role} ${msg.error ? 'error' : ''}`}
           >
             <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
-              {msg.content}
+              {extractMessageText(msg.content)}
             </pre>
           </div>
         ))}

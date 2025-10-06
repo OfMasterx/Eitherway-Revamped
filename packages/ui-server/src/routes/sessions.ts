@@ -7,8 +7,17 @@ import {
   WorkingSetRepository,
   EventsRepository,
   AppsRepository,
+  PostgresFileStore,
   DatabaseClient
 } from '@eitherway/database';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { hydrateAppFromScaffold } from '../utils/scaffold-hydrator.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PROJECT_ROOT = join(__dirname, '../../../..');
+const SCAFFOLD_PATH = join(PROJECT_ROOT, 'templates/react-vite-starter');
 
 export async function registerSessionRoutes(fastify: FastifyInstance, db: DatabaseClient) {
   const usersRepo = new UsersRepository(db);
@@ -18,6 +27,7 @@ export async function registerSessionRoutes(fastify: FastifyInstance, db: Databa
   const workingSetRepo = new WorkingSetRepository(db);
   const eventsRepo = new EventsRepository(db);
   const appsRepo = new AppsRepository(db);
+  const fileStore = new PostgresFileStore(db);
 
   fastify.post<{
     Body: { email: string; title: string; appId?: string }
@@ -29,6 +39,30 @@ export async function registerSessionRoutes(fastify: FastifyInstance, db: Databa
     // Create a unique app for each session to ensure isolated workspaces
     const app = await appsRepo.create(user.id, title, 'private');
     const session = await sessionsRepo.create(user.id, title, app.id);
+
+    // Hydrate the app with the React + Vite scaffold
+    try {
+      const filesCreated = await hydrateAppFromScaffold(fileStore, app.id, SCAFFOLD_PATH);
+      console.log(`✓ Hydrated app ${app.id} with ${filesCreated} files from scaffold`);
+
+      await eventsRepo.log('app.scaffolded', {
+        appId: app.id,
+        filesCreated,
+        scaffold: 'react-vite-starter'
+      }, {
+        sessionId: session.id,
+        actor: 'system'
+      });
+    } catch (error: any) {
+      console.error(`Failed to hydrate app ${app.id}:`, error.message);
+      await eventsRepo.log('app.scaffold.failed', {
+        appId: app.id,
+        error: error.message
+      }, {
+        sessionId: session.id,
+        actor: 'system'
+      });
+    }
 
     await eventsRepo.log('session.created', { sessionId: session.id, title }, {
       sessionId: session.id,
