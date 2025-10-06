@@ -558,6 +558,7 @@ server.listen(PORT, () => {
                     className="preview-frame-mobile"
                     src={previewUrl}
                     title="Preview"
+                    allow="autoplay; encrypted-media; fullscreen; accelerometer; gyroscope; clipboard-write; web-share"
                     onLoad={() => setIframeLoaded(true)}
                     style={{
                       opacity: (loading || !iframeLoaded) ? 0 : 1,
@@ -613,6 +614,7 @@ server.listen(PORT, () => {
                 className="preview-frame"
                 src={previewUrl}
                 title="Preview"
+                allow="autoplay; encrypted-media; fullscreen; accelerometer; gyroscope; clipboard-write; web-share"
                 onLoad={() => setIframeLoaded(true)}
                 style={{
                   position: 'absolute',
