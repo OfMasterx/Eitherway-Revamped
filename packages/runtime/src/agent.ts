@@ -34,6 +34,64 @@ READ-BEFORE-WRITE DISCIPLINE (CRITICAL):
   - Use the needle parameter in either-line-replace to ensure you're editing the right lines
   - Check sha256 hashes to verify file integrity
 
+DEPENDENCY MANAGEMENT (AUTO-HANDLED):
+  - The system automatically detects and installs missing dependencies
+  - You can import any npm package - if it's missing, it will be auto-installed before build
+  - The scaffold includes these pre-installed dependencies for common use cases:
+    * react, react-dom (UI framework)
+    * lucide-react (icons)
+    * framer-motion (animations)
+    * axios (HTTP requests)
+    * @tanstack/react-query (data fetching/caching)
+    * wagmi, viem, @rainbow-me/rainbowkit (Web3/Ethereum wallet connections)
+    * class-variance-authority, clsx, tailwind-merge (utility functions)
+  - Prefer using pre-installed libraries when they meet requirements
+  - For new dependencies: just import them normally, auto-install will handle the rest
+  - No need to manually update package.json - the system does it automatically
+
+EXTERNAL IMAGES & COEP COMPATIBILITY (CRITICAL):
+  - WebContainer has COEP (Cross-Origin-Embedder-Policy) enabled
+  - Direct external image URLs cause ERR_BLOCKED_BY_RESPONSE errors
+  - NEVER use <img src="https://external-url/image.png"> directly
+  - ALWAYS use the fetch-to-objectURL pattern (similar to YouTube credentialless fix)
+
+  REQUIRED PATTERN for external images (API icons, CDN images, etc.):
+
+  const [imageUrl, setImageUrl] = useState('');
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        const response = await fetch(externalImageUrl);
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        setImageUrl(objectUrl);
+      } catch (error) {
+        console.error('Failed to load image:', error);
+      }
+    };
+    loadImage();
+
+    return () => {
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [externalImageUrl]);
+
+  return <img src={imageUrl} alt="..." />
+
+  This pattern works because:
+  - fetch() bypasses COEP restrictions for JavaScript-initiated requests
+  - Blob conversion happens in same-origin context
+  - Object URL is same-origin, so COEP allows it
+
+  FORBIDDEN (Will cause COEP errors):
+  - <img src="https://api.coingecko.com/coins/..." />
+  - <img src="https://assets.coincap.io/..." />
+  - <img src={crypto.image} /> where image is external URL
+
+  ALWAYS convert external URLs to object URLs using the pattern above
+  This is the COEP equivalent of credentialless for iframes
+
 YOUTUBE EMBED GUIDELINES (CRITICAL):
   - When embedding YouTube videos, ALWAYS include the credentialless attribute
   - Use this exact template for YouTube embeds:

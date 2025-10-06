@@ -306,12 +306,43 @@ export class ModelClient {
    * Convert our Message format to Anthropic's format
    */
   private convertMessages(messages: Message[]): Anthropic.MessageParam[] {
-    return messages.map(msg => ({
-      role: msg.role as 'user' | 'assistant',
-      content: typeof msg.content === 'string'
-        ? msg.content
-        : msg.content as any
-    }));
+    return messages.map((msg, idx) => {
+      // String content - simple case
+      if (typeof msg.content === 'string') {
+        return {
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        };
+      }
+
+      // Array content - must be valid content blocks
+      if (Array.isArray(msg.content)) {
+        // Filter out any invalid blocks
+        const validContent = msg.content.filter(block =>
+          block && typeof block === 'object' && 'type' in block
+        );
+
+        if (validContent.length === 0) {
+          console.warn(`[ModelClient] Message ${idx} has empty or invalid content array, converting to empty string`);
+          return {
+            role: msg.role as 'user' | 'assistant',
+            content: ''
+          };
+        }
+
+        return {
+          role: msg.role as 'user' | 'assistant',
+          content: validContent as any
+        };
+      }
+
+      // Fallback for unexpected content types
+      console.error(`[ModelClient] Message ${idx} has unexpected content type:`, typeof msg.content);
+      return {
+        role: msg.role as 'user' | 'assistant',
+        content: ''
+      };
+    });
   }
 
   /**

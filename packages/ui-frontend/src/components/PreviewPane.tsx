@@ -335,18 +335,6 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
 
         console.log('[PreviewPane] Files synced to WebContainer, serverAlreadyRunning:', serverAlreadyRunning);
 
-        // If server is already running, just update the files and we're done
-        if (serverAlreadyRunning) {
-          console.log('[PreviewPane] Files updated, server already running - refresh should show changes');
-          setLoading(false);
-
-          // Trigger a refresh of the iframe to show updated files
-          if (previewUrl) {
-            setRefreshKey(prev => prev + 1);
-          }
-          return;
-        }
-
         // Check if there's a package.json
         const hasPackageJson = findFile(files, 'package.json');
         const hasIndexHtml = findFile(files, 'index.html');
@@ -362,6 +350,110 @@ export default function PreviewPane({ files, sessionId, onUrlChange, deviceMode 
         });
 
         if (hasPackageJson && containerRef.current && !isTearingDownRef.current && operationSessionId === sessionId) {
+          setServerStatus('Checking dependencies...');
+
+          // Auto-detect and install missing dependencies
+          try {
+            // Read package.json
+            const packageJsonContent = await containerRef.current.fs.readFile('/package.json', 'utf-8');
+            const packageJson = JSON.parse(packageJsonContent);
+            const installedDeps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+
+            // Extract all imports from source files
+            const missingDeps = new Set<string>();
+            const extractImports = async (node: any) => {
+              if (node.type === 'file' && (node.path.endsWith('.ts') || node.path.endsWith('.tsx') || node.path.endsWith('.js') || node.path.endsWith('.jsx'))) {
+                try {
+                  const encodedPath = encodeURIComponent(node.path);
+                  const res = await fetch(`/api/sessions/${sessionId}/files/read?path=${encodedPath}`);
+                  const data = await res.json();
+                  const content = data.content || '';
+
+                  // Node.js built-in modules (don't need to be installed)
+                  const builtinModules = new Set([
+                    'assert', 'buffer', 'child_process', 'cluster', 'crypto', 'dgram', 'dns', 'domain',
+                    'events', 'fs', 'http', 'https', 'net', 'os', 'path', 'punycode', 'querystring',
+                    'readline', 'stream', 'string_decoder', 'timers', 'tls', 'tty', 'url', 'util',
+                    'v8', 'vm', 'zlib', 'async_hooks', 'http2', 'perf_hooks', 'trace_events',
+                    'worker_threads', 'inspector', 'constants', 'module', 'process', 'repl'
+                  ]);
+
+                  // Match import statements
+                  const importRegex = /import\s+(?:{[^}]*}|[\w*]+)?\s*(?:,\s*{[^}]*})?\s*from\s+['"]([^'"]+)['"]/g;
+                  let match;
+                  while ((match = importRegex.exec(content)) !== null) {
+                    const importPath = match[1];
+                    // Check if it's a package import (not relative)
+                    if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+                      // Exclude path aliases (e.g., @/lib, ~/utils, #/components)
+                      if (importPath.startsWith('@/') || importPath.startsWith('~/') || importPath.startsWith('#/')) {
+                        continue; // Skip path aliases
+                      }
+
+                      // Extract package name (handle scoped packages like @tanstack/react-query)
+                      const packageName = importPath.startsWith('@')
+                        ? importPath.split('/').slice(0, 2).join('/')
+                        : importPath.split('/')[0];
+
+                      // Skip Node.js built-in modules
+                      if (builtinModules.has(packageName)) {
+                        continue;
+                      }
+
+                      // Check if not installed
+                      if (!installedDeps[packageName] && packageName !== 'react' && packageName !== 'react-dom') {
+                        missingDeps.add(packageName);
+                      }
+                    }
+                  }
+                } catch (err) {
+                  console.error('Error reading file for import detection:', node.path, err);
+                }
+              } else if (node.type === 'directory' && node.children) {
+                for (const child of node.children) {
+                  await extractImports(child);
+                }
+              }
+            };
+
+            // Scan all files
+            for (const node of files) {
+              await extractImports(node);
+            }
+
+            // Install missing dependencies
+            if (missingDeps.size > 0) {
+              console.log('[PreviewPane] Missing dependencies detected:', Array.from(missingDeps));
+              setServerStatus(`Installing ${missingDeps.size} missing package(s)...`);
+
+              for (const dep of missingDeps) {
+                console.log(`[PreviewPane] Installing ${dep}...`);
+                const installMissingProcess = await containerRef.current.spawn('npm', ['install', dep, '--save']);
+                await installMissingProcess.exit;
+              }
+
+              // Force server restart if new deps were installed
+              if (serverAlreadyRunning) {
+                console.log('[PreviewPane] New dependencies installed, restarting dev server...');
+                serverStartedRef.current = false; // Force restart
+                currentRunningSessionId = null;
+                currentServerUrl = null;
+              }
+            }
+          } catch (err) {
+            console.error('[PreviewPane] Error detecting missing dependencies:', err);
+          }
+
+          // If server is already running and no new deps, skip reinstall and restart
+          if (serverAlreadyRunning && serverStartedRef.current) {
+            console.log('[PreviewPane] Server running, no new deps - just refreshing preview');
+            setLoading(false);
+            if (previewUrl) {
+              setRefreshKey(prev => prev + 1);
+            }
+            return;
+          }
+
           setServerStatus('Installing dependencies...');
 
           // Check before each operation
