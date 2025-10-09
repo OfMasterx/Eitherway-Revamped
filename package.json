@@ -1,0 +1,26 @@
+{
+  "name": "eitherway-integrated",
+  "version": "1.0.0",
+  "description": "Integrated Eitherway app with stable backend and stripped-fe frontend",
+  "private": true,
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "install:all": "pnpm install",
+    "build:packages": "pnpm -r --filter './backend/database' --filter './backend/runtime' --filter './backend/tools-core' --filter './backend/tools-impl' run build",
+    "dev": "concurrently \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
+    "dev:backend": "cd backend && pnpm run dev",
+    "dev:frontend": "cd frontend && pnpm run dev",
+    "build": "pnpm run build:packages && pnpm run build:frontend",
+    "build:backend": "pnpm run build:packages",
+    "build:frontend": "cd frontend && pnpm run build",
+    "start": "concurrently \"pnpm run start:backend\" \"pnpm run start:frontend\"",
+    "start:backend": "cd backend && pnpm start",
+    "start:frontend": "cd frontend && pnpm start",
+    "setup:https": "bash scripts/setup-https.sh",
+    "clean": "pnpm -r exec rm -rf node_modules dist && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
+}

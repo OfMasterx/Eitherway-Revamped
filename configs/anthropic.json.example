@@ -1,0 +1,21 @@
+{
+  "apiKey": "YOUR_ANTHROPIC_API_KEY_HERE",
+  "model": "claude-sonnet-4-5-20250929",
+  "maxTokens": 8192,
+  "temperature": 0.2,
+  "topP": 0.9,
+  "streaming": true,
+  "provider": "anthropic",
+  "providerConfig": {
+    "anthropic": {
+      "baseURL": "https://api.anthropic.com"
+    }
+  },
+  "thinking": {
+    "enabled": false,
+    "budget": "medium"
+  },
+  "promptCaching": {
+    "enabled": false
+  }
+}

@@ -1,0 +1,78 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.remix/
+.cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+
+# Certificates (sensitive)
+.certs/
+*.pem
+*.key
+*.crt
+
+# Database
+*.db
+*.sqlite
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Docker
+.docker/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Workspace (user-generated files)
+workspace/
+
+# Config files with API keys (use .example files as templates)
+configs/anthropic.json
+configs/*.json
+
+# Repomix output files
+repomix-output.xml
+repomix-output.txt
+
+# TypeScript
+*.tsbuildinfo
+
+# Package manager
+.yarn/
+.pnpm-debug.log

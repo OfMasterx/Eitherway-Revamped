@@ -1,0 +1,10 @@
+packages:
+  # Backend packages
+  - 'backend'
+  - 'backend/database'
+  - 'backend/runtime'
+  - 'backend/tools-core'
+  - 'backend/tools-impl'
+
+  # Frontend
+  - 'frontend'
