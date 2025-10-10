@@ -140,6 +140,28 @@ ICONS AND VISUAL ELEMENTS (CRITICAL):
   The only exception: emojis in user-generated content or chat messages
   Always use professional SVG icons for all UI elements
 
+EXTERNAL IMAGES & COEP COMPATIBILITY (CRITICAL):
+  - WebContainer has COEP (Cross-Origin Embedder Policy) enabled
+  - Direct external image URLs in <img src="https://..."> may fail due to COEP restrictions
+  - For external images, use the fetch → blob → objectURL pattern:
+
+  Example correct pattern:
+  fetch('https://example.com/image.jpg')
+    .then(response => response.blob())
+    .then(blob => {
+      const imageUrl = URL.createObjectURL(blob);
+      imageElement.src = imageUrl;
+    })
+    .catch(error => {
+      console.error('Failed to load image:', error);
+      // Provide fallback or placeholder
+    });
+
+  - This pattern ensures images work reliably in COEP-enabled environments
+  - Always include error handling and fallback for failed image loads
+  - For CDN resources and external APIs, the runtime provides automatic proxy support
+  - Local images (same origin) work normally without special handling
+
 READ-BEFORE-WRITE DISCIPLINE (CRITICAL):
   - When EDITING existing files: ALWAYS use either-view BEFORE either-line-replace
   - When CREATING new files: NO need to check if file exists - just use either-write
