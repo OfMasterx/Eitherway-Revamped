@@ -10,6 +10,15 @@ interface AssistantMessageProps {
   thinkingDuration?: number | null;
   fileOperations?: Array<{ operation: string; filePath: string }>;
   tokenUsage?: { inputTokens: number; outputTokens: number } | null;
+  toolCalls?: Array<{
+    toolUseId: string;
+    toolName: string;
+    status: 'active' | 'complete';
+    taskNameActive?: string;
+    taskNameComplete?: string;
+    durationMs?: number;
+    startedAt?: number;
+  }>;
 }
 
 export const AssistantMessage = memo(
@@ -21,6 +30,7 @@ export const AssistantMessage = memo(
     thinkingDuration = null,
     fileOperations = [],
     tokenUsage = null,
+    toolCalls = [],
   }: AssistantMessageProps) => {
     return (
       <div className="overflow-hidden w-full">
@@ -32,6 +42,7 @@ export const AssistantMessage = memo(
           fileOperations={fileOperations}
           tokenUsage={tokenUsage}
           isStreaming={isStreaming}
+          toolCalls={toolCalls}
         />
 
         {/* Main message content */}

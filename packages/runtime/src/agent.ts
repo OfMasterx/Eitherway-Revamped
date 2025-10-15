@@ -471,6 +471,11 @@ export class Agent {
 
       // Only add assistant message if it has content (Anthropic API requirement)
       if (enforcedAssistantBlocks.length > 0) {
+        // Keep all blocks as-is for conversation history (including thinking blocks)
+        // The API handles thinking blocks appropriately:
+        // - thinking blocks are automatically excluded from context window calculations
+        // - redacted_thinking blocks (from API) should be passed through unchanged
+        // - DO NOT manually convert thinking to redacted_thinking - that causes "Invalid data" errors
         this.conversationHistory.push({
           role: 'assistant',
           content: enforcedAssistantBlocks as any,
@@ -489,20 +494,18 @@ export class Agent {
       if (toolUses.length === 0) {
         finalResponse = textBlocks;
 
-        // If we were in summary phase, stream the buffered summary smoothly
+        // If we were in summary phase, stream the buffered summary as regular content
         if (isInSummaryPhase && summaryBuffer) {
-          // Emit 'building' phase
+          // Emit 'building' phase briefly
           if (callbacks?.onPhase) {
             callbacks.onPhase('building');
+            // Short delay to show "Building..." indicator
+            await new Promise((resolve) => setTimeout(resolve, 500));
           }
 
           // Stream buffered summary as regular message content (NOT reasoning)
           if (callbacks?.onDelta) {
-            for (let i = 0; i < summaryBuffer.length; i += REASONING_STREAM_CHUNK_SIZE) {
-              const chunk = summaryBuffer.slice(i, i + REASONING_STREAM_CHUNK_SIZE);
-              callbacks.onDelta({ type: 'text', content: chunk });
-              await new Promise((resolve) => setTimeout(resolve, REASONING_STREAM_DELAY_MS));
-            }
+            callbacks.onDelta({ type: 'text', content: summaryBuffer });
           }
 
           // Clear summary phase

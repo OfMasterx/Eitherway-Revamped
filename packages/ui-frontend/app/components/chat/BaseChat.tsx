@@ -48,6 +48,15 @@ interface BaseChatProps {
   thinkingDuration?: number | null;
   fileOperations?: Array<{ operation: string; filePath: string }>;
   tokenUsage?: { inputTokens: number; outputTokens: number } | null;
+  toolCalls?: Array<{
+    toolUseId: string;
+    toolName: string;
+    status: 'active' | 'complete';
+    taskNameActive?: string;
+    taskNameComplete?: string;
+    durationMs?: number;
+    startedAt?: number;
+  }>;
 
   handleStop?: () => void;
   sendMessage?: (event: React.UIEvent, messageInput?: string) => void;
@@ -78,6 +87,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       thinkingDuration,
       fileOperations,
       tokenUsage,
+      toolCalls,
 
       sendMessage,
       handleInputChange,
@@ -272,6 +282,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       thinkingDuration={thinkingDuration}
                       fileOperations={fileOperations}
                       tokenUsage={tokenUsage}
+                      toolCalls={toolCalls}
                     />
                   ) : null;
                 }}

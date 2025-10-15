@@ -472,6 +472,15 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
       fileOperations?: Array<{ operation: string; filePath: string }>;
       tokenUsage?: { inputTokens: number; outputTokens: number } | null;
       phase?: 'pending' | 'thinking' | 'reasoning' | 'code-writing' | 'building' | 'completed' | null;
+      toolCalls?: Array<{
+        toolUseId: string;
+        toolName: string;
+        status: 'active' | 'complete';
+        taskNameActive?: string;
+        taskNameComplete?: string;
+        durationMs?: number;
+        startedAt?: number;
+      }>;
     };
   }
 
@@ -487,6 +496,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
     fileOperations: [],
     tokenUsage: null,
     phase: null,
+    toolCalls: [],
   });
 
   // Phase 2: Enhanced streaming state (for current message only)
@@ -497,6 +507,17 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
   const [thinkingDuration, setThinkingDuration] = useState<number | null>(null);
   const [fileOperations, setFileOperations] = useState<Array<{ operation: string; filePath: string }>>([]);
   const [tokenUsage, setTokenUsage] = useState<{ inputTokens: number; outputTokens: number } | null>(null);
+  const [toolCalls, setToolCalls] = useState<
+    Array<{
+      toolUseId: string;
+      toolName: string;
+      status: 'active' | 'complete';
+      taskNameActive?: string;
+      taskNameComplete?: string;
+      durationMs?: number;
+      startedAt?: number;
+    }>
+  >([]);
 
   const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
 
@@ -580,6 +601,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
               fileOperations,
               tokenUsage,
               phase: currentPhase,
+              toolCalls,
             },
           };
         }
@@ -641,6 +663,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
     setThinkingDuration(null);
     setFileOperations([]);
     setTokenUsage(null);
+    setToolCalls([]);
     backendMessageIdRef.current = null;
     metadataRef.current = {
       reasoningText: '',
@@ -648,6 +671,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
       fileOperations: [],
       tokenUsage: null,
       phase: null,
+      toolCalls: [],
     };
 
     const userMessage: Message = {
@@ -667,6 +691,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
         fileOperations: [],
         tokenUsage: null,
         phase: null,
+        toolCalls: [],
       },
     };
 
@@ -821,6 +846,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
                     fileOperations,
                     tokenUsage,
                     phase: currentPhase,
+                    toolCalls,
                   },
                 };
               }
@@ -942,6 +968,54 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
           setTokenUsage(usage);
           updateMessageMetadata({ tokenUsage: usage });
         },
+        onToolEvent: (event) => {
+          logger.debug('Tool event:', event.event, event.toolName, event.toolUseId);
+          setToolCalls((prev) => {
+            let updated: typeof prev;
+            if (event.event === 'start') {
+              // Add or update tool call as active
+              const existing = prev.find((t) => t.toolUseId === event.toolUseId);
+              if (existing) {
+                updated = prev.map((t) =>
+                  t.toolUseId === event.toolUseId
+                    ? {
+                        ...t,
+                        status: 'active' as const,
+                        taskNameActive: event.taskNameActive,
+                        taskNameComplete: event.taskNameComplete,
+                        startedAt: event.startedAt,
+                      }
+                    : t,
+                );
+              } else {
+                updated = [
+                  ...prev,
+                  {
+                    toolUseId: event.toolUseId || `tool-${Date.now()}`,
+                    toolName: event.toolName,
+                    status: 'active' as const,
+                    taskNameActive: event.taskNameActive,
+                    taskNameComplete: event.taskNameComplete,
+                    startedAt: event.startedAt,
+                  },
+                ];
+              }
+            } else {
+              // Mark as complete
+              updated = prev.map((t) =>
+                t.toolUseId === event.toolUseId
+                  ? {
+                      ...t,
+                      status: 'complete' as const,
+                      durationMs: event.durationMs,
+                    }
+                  : t,
+              );
+            }
+            updateMessageMetadata({ toolCalls: updated });
+            return updated;
+          });
+        },
       });
 
       streamControllerRef.current = controller;
@@ -985,6 +1059,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
       thinkingDuration={thinkingDuration}
       fileOperations={fileOperations}
       tokenUsage={tokenUsage}
+      toolCalls={toolCalls}
     />
   );
 });

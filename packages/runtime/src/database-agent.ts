@@ -73,8 +73,8 @@ export class DatabaseAgent {
           content = [{ type: 'text', text: content }];
         } else if (typeof content === 'object' && content !== null) {
           if (Array.isArray(content)) {
-            // Already an array - keep as-is
-            content = content;
+            // Already an array - clean up any invalid redacted_thinking blocks from old data
+            content = this.cleanupInvalidRedactedThinkingBlocks(content);
           } else if ('text' in content && content.text) {
             // Object with text property - wrap in array
             content = [{ type: 'text', text: content.text }];
@@ -188,6 +188,53 @@ export class DatabaseAgent {
         lastCompactedMessageId: recentMessages[recentMessages.length - 1]?.id.toString(),
       });
     }
+  }
+
+  /**
+   * Clean up invalid redacted_thinking blocks from old database data
+   * These were created by buggy code that manually converted thinking blocks to fake redacted_thinking
+   * Valid redacted_thinking blocks have encrypted base64 data, invalid ones have plain text like '[redacted]'
+   */
+  private cleanupInvalidRedactedThinkingBlocks(contentBlocks: any[]): any[] {
+    return contentBlocks.map((block) => {
+      if (block.type === 'redacted_thinking' && block.data) {
+        // Check if this is an invalid fake redacted_thinking block
+        // Valid encrypted data is base64 encoded and much longer (100+ chars)
+        // Invalid data is plain text like '[redacted]' (< 50 chars)
+        const dataStr = String(block.data);
+
+        if (dataStr.length < 50 || !this.isBase64Encrypted(dataStr)) {
+          // This is invalid - convert back to thinking block or remove
+          console.log('[DatabaseAgent] Removing invalid redacted_thinking block with data:', dataStr);
+
+          // If there's thinking content, convert to proper thinking block, otherwise filter out
+          if (block.text || block.thinking) {
+            return {
+              type: 'thinking',
+              thinking: block.thinking || block.text, // Use 'thinking' field, fallback to 'text' for old data
+            };
+          } else {
+            // No thinking content - return null to filter out later
+            return null;
+          }
+        }
+      }
+
+      return block;
+    }).filter(Boolean); // Remove null entries
+  }
+
+  /**
+   * Check if a string looks like valid base64-encoded encrypted data
+   */
+  private isBase64Encrypted(str: string): boolean {
+    // Valid encrypted data should be base64 with mixed case and special chars
+    // and be reasonably long (> 100 chars)
+    if (str.length < 100) return false;
+
+    // Base64 regex pattern
+    const base64Pattern = /^[A-Za-z0-9+/]+=*$/;
+    return base64Pattern.test(str);
   }
 
   private generateSummary(messages: Message[]): string {

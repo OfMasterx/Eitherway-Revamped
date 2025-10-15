@@ -27,6 +27,7 @@ import { randomUUID } from 'crypto';
 import { StreamEvents, createEventSender } from './events/index.js';
 import { API_CACHE_TTL_MS, CDN_CACHE_MAX_AGE_SECONDS, DEFAULT_SERVER_PORT } from './constants.js';
 import { isSecureUrl } from './security/ssrf-guard.js';
+import { getToolActiveLabel, getToolCompleteLabel } from './utils/toolLabels.js';
 
 // Resolve project root (go up from packages/ui-server/src to project root)
 const __filename = fileURLToPath(import.meta.url);
@@ -532,6 +533,9 @@ await fastify.register(async (fastify) => {
             let accumulatedText = '';
             let tokenUsage: { inputTokens: number; outputTokens: number } | undefined;
 
+            // Track tool start times for duration calculation
+            const toolStartTimes = new Map<string, number>();
+
             // Create streaming callbacks
             const streamingCallbacks: StreamingCallbacks = {
               onMessageCreated: (dbMessageId) => {
@@ -561,10 +565,33 @@ await fastify.register(async (fastify) => {
                 sender.send(StreamEvents.fileOperation(messageId, operation, filePath));
               },
               onToolStart: (tool) => {
-                sender.send(StreamEvents.toolStart(tool.name, tool.toolUseId, messageId, tool.filePath));
+                const activeLabel = getToolActiveLabel(tool.name);
+                const completeLabel = getToolCompleteLabel(tool.name);
+                toolStartTimes.set(tool.toolUseId, Date.now());
+                sender.send(StreamEvents.toolStart(
+                  tool.name,
+                  tool.toolUseId,
+                  messageId,
+                  tool.filePath,
+                  undefined, // requestId
+                  activeLabel,
+                  completeLabel
+                ));
               },
               onToolEnd: (tool) => {
-                sender.send(StreamEvents.toolEnd(tool.name, tool.toolUseId, messageId, tool.filePath));
+                const startTime = toolStartTimes.get(tool.toolUseId);
+                const durationMs = startTime ? Date.now() - startTime : undefined;
+                toolStartTimes.delete(tool.toolUseId);
+                const completeLabel = getToolCompleteLabel(tool.name);
+                sender.send(StreamEvents.toolEnd(
+                  tool.name,
+                  tool.toolUseId,
+                  messageId,
+                  tool.filePath,
+                  undefined, // requestId
+                  durationMs,
+                  completeLabel
+                ));
               },
               onComplete: (usage) => {
                 tokenUsage = usage;
@@ -598,6 +625,9 @@ await fastify.register(async (fastify) => {
             // Send stream_start event
             sender.send(StreamEvents.streamStart(messageId));
 
+            // Track tool start times for duration calculation
+            const toolStartTimes = new Map<string, number>();
+
             // Create streaming callbacks
             const streamingCallbacks: StreamingCallbacks = {
               onDelta: (delta) => {
@@ -622,10 +652,33 @@ await fastify.register(async (fastify) => {
                 sender.send(StreamEvents.fileOperation(messageId, operation, filePath));
               },
               onToolStart: (tool) => {
-                sender.send(StreamEvents.toolStart(tool.name, tool.toolUseId, messageId, tool.filePath));
+                const activeLabel = getToolActiveLabel(tool.name);
+                const completeLabel = getToolCompleteLabel(tool.name);
+                toolStartTimes.set(tool.toolUseId, Date.now());
+                sender.send(StreamEvents.toolStart(
+                  tool.name,
+                  tool.toolUseId,
+                  messageId,
+                  tool.filePath,
+                  undefined, // requestId
+                  activeLabel,
+                  completeLabel
+                ));
               },
               onToolEnd: (tool) => {
-                sender.send(StreamEvents.toolEnd(tool.name, tool.toolUseId, messageId, tool.filePath));
+                const startTime = toolStartTimes.get(tool.toolUseId);
+                const durationMs = startTime ? Date.now() - startTime : undefined;
+                toolStartTimes.delete(tool.toolUseId);
+                const completeLabel = getToolCompleteLabel(tool.name);
+                sender.send(StreamEvents.toolEnd(
+                  tool.name,
+                  tool.toolUseId,
+                  messageId,
+                  tool.filePath,
+                  undefined, // requestId
+                  durationMs,
+                  completeLabel
+                ));
               },
               onComplete: (usage) => {
                 tokenUsage = usage;

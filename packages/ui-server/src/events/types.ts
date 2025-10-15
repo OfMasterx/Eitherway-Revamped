@@ -72,6 +72,10 @@ const ToolEventSchema = BaseEventSchema.extend({
   toolUseId: z.string().optional(),
   messageId: z.string().optional(),
   filePath: z.string().optional(), // File being operated on
+  taskNameActive: z.string().optional(), // Human-friendly label for active state (e.g., "Searching web")
+  taskNameComplete: z.string().optional(), // Human-friendly label for complete state (e.g., "Searched web")
+  durationMs: z.number().optional(), // Duration in milliseconds (only on 'end' events)
+  startedAt: z.number().optional(), // Timestamp when tool started (for client-side duration calculation)
 });
 
 // Files updated event
@@ -193,6 +197,8 @@ export const StreamEvents = {
     messageId?: string,
     filePath?: string,
     requestId?: string,
+    taskNameActive?: string,
+    taskNameComplete?: string,
   ): ToolEvent {
     return {
       kind: 'tool',
@@ -201,12 +207,23 @@ export const StreamEvents = {
       toolUseId,
       messageId,
       filePath,
+      taskNameActive,
+      taskNameComplete,
+      startedAt: Date.now(),
       ts: Date.now(),
       requestId,
     };
   },
 
-  toolEnd(toolName: string, toolUseId?: string, messageId?: string, filePath?: string, requestId?: string): ToolEvent {
+  toolEnd(
+    toolName: string,
+    toolUseId?: string,
+    messageId?: string,
+    filePath?: string,
+    requestId?: string,
+    durationMs?: number,
+    taskNameComplete?: string,
+  ): ToolEvent {
     return {
       kind: 'tool',
       event: 'end',
@@ -214,6 +231,8 @@ export const StreamEvents = {
       toolUseId,
       messageId,
       filePath,
+      durationMs,
+      taskNameComplete,
       ts: Date.now(),
       requestId,
     };

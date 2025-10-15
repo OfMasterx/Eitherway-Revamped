@@ -14,6 +14,17 @@ export interface StreamOptions {
   onReasoning?: (text: string) => void;
   onThinkingComplete?: (duration: number) => void;
   onFileOperation?: (operation: 'creating' | 'editing' | 'created' | 'edited', filePath: string) => void;
+  onToolEvent?: (event: {
+    event: 'start' | 'end';
+    toolName: string;
+    toolUseId?: string;
+    messageId?: string;
+    filePath?: string;
+    taskNameActive?: string;
+    taskNameComplete?: string;
+    durationMs?: number;
+    startedAt?: number;
+  }) => void;
   onFilesUpdated?: (files: any[], sessionId?: string) => void;
   onTokenUsage?: (inputTokens: number, outputTokens: number) => void;
 }
@@ -43,6 +54,7 @@ export async function streamFromWebSocket(options: StreamOptions): Promise<Strea
     onReasoning,
     onThinkingComplete,
     onFileOperation,
+    onToolEvent,
     onFilesUpdated,
     onTokenUsage,
   } = options;
@@ -182,6 +194,19 @@ export async function streamFromWebSocket(options: StreamOptions): Promise<Strea
             } else if (data.event === 'end') {
               console.log('[WebSocket] Tool ended:', data.toolName, data.filePath);
             }
+            if (onToolEvent) {
+              onToolEvent({
+                event: data.event,
+                toolName: data.toolName,
+                toolUseId: data.toolUseId,
+                messageId: data.messageId,
+                filePath: data.filePath,
+                taskNameActive: data.taskNameActive,
+                taskNameComplete: data.taskNameComplete,
+                durationMs: data.durationMs,
+                startedAt: data.startedAt,
+              });
+            }
             break;
 
           case 'files_updated':
@@ -245,14 +270,11 @@ export async function streamFromWebSocket(options: StreamOptions): Promise<Strea
     await connectWebSocket();
 
     console.log('[WebSocket] Sending prompt:', prompt);
-    if (ws) {
-      ws.send(
-        JSON.stringify({
-          type: 'prompt',
-          prompt: prompt,
-        }),
-      );
-    }
+    // Send the prompt message
+    send({
+      type: 'prompt',
+      prompt: prompt,
+    });
 
     return { abort, send };
   } catch (error) {

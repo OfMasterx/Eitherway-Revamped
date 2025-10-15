@@ -33,7 +33,7 @@ export interface ToolResult {
 export type MessageRole = 'user' | 'assistant';
 
 export interface MessageContent {
-  type: 'text' | 'tool_use' | 'tool_result' | 'server_tool_use' | 'web_search_tool_result';
+  type: 'text' | 'tool_use' | 'tool_result' | 'server_tool_use' | 'web_search_tool_result' | 'thinking' | 'redacted_thinking';
   [key: string]: any;
 }
 

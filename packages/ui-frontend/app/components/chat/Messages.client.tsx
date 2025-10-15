@@ -17,6 +17,15 @@ interface MessagesProps {
   thinkingDuration?: number | null;
   fileOperations?: Array<{ operation: string; filePath: string }>;
   tokenUsage?: { inputTokens: number; outputTokens: number } | null;
+  toolCalls?: Array<{
+    toolUseId: string;
+    toolName: string;
+    status: 'active' | 'complete';
+    taskNameActive?: string;
+    taskNameComplete?: string;
+    durationMs?: number;
+    startedAt?: number;
+  }>;
 }
 
 interface ExtendedMessage extends Message {
@@ -26,6 +35,15 @@ interface ExtendedMessage extends Message {
     fileOperations?: Array<{ operation: string; filePath: string }>;
     tokenUsage?: { inputTokens: number; outputTokens: number } | null;
     phase?: 'pending' | 'thinking' | 'reasoning' | 'code-writing' | 'building' | 'completed' | null;
+    toolCalls?: Array<{
+      toolUseId: string;
+      toolName: string;
+      status: 'active' | 'complete';
+      taskNameActive?: string;
+      taskNameComplete?: string;
+      durationMs?: number;
+      startedAt?: number;
+    }>;
   };
 }
 
@@ -40,6 +58,7 @@ export const Messages = React.forwardRef<HTMLDivElement, MessagesProps>((props: 
     thinkingDuration,
     fileOperations,
     tokenUsage,
+    toolCalls,
   } = props;
 
   return (
@@ -97,6 +116,10 @@ export const Messages = React.forwardRef<HTMLDivElement, MessagesProps>((props: 
               ? messageMetadata.tokenUsage || tokenUsage
               : messageMetadata.tokenUsage || null;
 
+            const displayToolCalls = isLast
+              ? messageMetadata.toolCalls || toolCalls
+              : messageMetadata.toolCalls || [];
+
             // Debug: Log what we're displaying for each message
             if (!isUserMessage) {
               console.log(`📖 [Render Message ${index}]`, {
@@ -139,6 +162,7 @@ export const Messages = React.forwardRef<HTMLDivElement, MessagesProps>((props: 
                       thinkingDuration={displayThinkingDuration}
                       fileOperations={displayFileOperations}
                       tokenUsage={displayTokenUsage}
+                      toolCalls={displayToolCalls}
                     />
                   )}
                 </div>

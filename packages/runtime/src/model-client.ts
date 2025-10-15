@@ -16,7 +16,7 @@ export interface ModelResponse {
   id: string;
   role: 'assistant';
   content: Array<{
-    type: 'text' | 'tool_use' | 'server_tool_use' | 'web_search_tool_result';
+    type: 'text' | 'tool_use' | 'server_tool_use' | 'web_search_tool_result' | 'thinking' | 'redacted_thinking';
     text?: string;
     id?: string;
     name?: string;
@@ -107,6 +107,15 @@ export class ModelClient {
       params.temperature = this.config.temperature;
     }
 
+    // Enable extended thinking if configured
+    if (this.config.thinking?.enabled) {
+      (params as any).thinking = {
+        type: 'enabled',
+        budget_tokens: this.config.thinking.budget === 'high' ? 10000 :
+                       this.config.thinking.budget === 'medium' ? 5000 : 2000
+      };
+    }
+
     if (this.config.streaming && options?.onDelta) {
       return this.streamMessage(params, options.onDelta, options.onComplete);
     } else {
@@ -134,6 +143,8 @@ export class ModelClient {
     const contentBlocks: any[] = [];
     let currentTextBlock = '';
     let currentToolUse: any = null;
+    let currentThinkingBlock = '';
+    let currentThinkingSignature = ''; // Accumulate signature from signature_delta events
 
     for await (const event of stream) {
       switch (event.type) {
@@ -148,6 +159,29 @@ export class ModelClient {
 
           if (event.content_block.type === 'text') {
             currentTextBlock = '';
+          } else if ((event.content_block as any).type === 'thinking') {
+            const thinkingStart = event.content_block as any;
+            console.log(`[STREAM] 💭 thinking block detected`);
+            console.log(`[STREAM] Full thinking block start:`, JSON.stringify(thinkingStart));
+            // Initialize thinking block - signature will come via signature_delta events
+            currentThinkingBlock = '';
+            currentThinkingSignature = '';
+            // Store the content_block_start for any other fields
+            currentToolUse = {
+              _thinkingStart: thinkingStart
+            };
+          } else if ((event.content_block as any).type === 'redacted_thinking') {
+            // CRITICAL: redacted_thinking blocks contain encrypted reasoning that must be preserved
+            // These blocks have { type, data, signature } and must be passed back unchanged
+            console.log(`[STREAM] 🔒 redacted_thinking block detected`);
+            const redactedBlock = event.content_block as any;
+            contentBlocks.push({
+              type: 'redacted_thinking',
+              data: redactedBlock.data,
+              signature: redactedBlock.signature,
+              // Include any other fields that might be present
+              ...redactedBlock,
+            });
           } else if (event.content_block.type === 'tool_use') {
             currentToolUse = {
               type: 'tool_use',
@@ -177,6 +211,13 @@ export class ModelClient {
           if (event.delta.type === 'text_delta') {
             currentTextBlock += event.delta.text;
             onDelta({ type: 'text', content: event.delta.text });
+          } else if ((event.delta as any).type === 'thinking_delta') {
+            // Accumulate thinking content (stream it later)
+            currentThinkingBlock += (event.delta as any).thinking;
+          } else if ((event.delta as any).type === 'signature_delta') {
+            // CRITICAL: Accumulate signature deltas for thinking blocks
+            console.log(`[STREAM] 📝 signature_delta detected`);
+            currentThinkingSignature += (event.delta as any).signature;
           } else if (event.delta.type === 'input_json_delta') {
             // Accumulate tool input JSON (parse only once on content_block_stop)
             if (currentToolUse) {
@@ -186,7 +227,21 @@ export class ModelClient {
           break;
 
         case 'content_block_stop':
-          if (currentTextBlock) {
+          if (currentThinkingBlock) {
+            console.log(`[STREAM] Pushing thinking block (${currentThinkingBlock.length} chars, signature: ${currentThinkingSignature.length} chars)`);
+            // CRITICAL: Thinking blocks need 'thinking' field AND signature accumulated from signature_delta
+            const thinkingBlock: any = {
+              type: 'thinking',
+              thinking: currentThinkingBlock,
+              signature: currentThinkingSignature, // Signature accumulated from signature_delta events
+            };
+
+            console.log(`[STREAM] Final thinking block (first 200 chars):`, JSON.stringify(thinkingBlock).substring(0, 200));
+            contentBlocks.push(thinkingBlock);
+            currentThinkingBlock = '';
+            currentThinkingSignature = '';
+            currentToolUse = null; // Clear the temporary storage
+          } else if (currentTextBlock) {
             console.log(`[STREAM] Pushing text block (${currentTextBlock.length} chars)`);
             contentBlocks.push({ type: 'text', text: currentTextBlock });
             currentTextBlock = '';
@@ -265,7 +320,26 @@ export class ModelClient {
       id: response.id,
       role: 'assistant',
       content: response.content.map((block: any) => {
-        if (block.type === 'text') {
+        if (block.type === 'thinking') {
+          // CRITICAL: Pass through the ENTIRE thinking block unchanged to preserve signature and all fields
+          return {
+            type: 'thinking',
+            thinking: block.thinking,
+            signature: block.signature,
+            // Preserve any other fields
+            ...block,
+          };
+        } else if (block.type === 'redacted_thinking') {
+          // CRITICAL: redacted_thinking blocks must be preserved with all fields intact
+          // These contain encrypted reasoning with signature verification
+          return {
+            type: 'redacted_thinking',
+            data: block.data,
+            signature: block.signature,
+            // Include any other fields that might be present
+            ...block,
+          };
+        } else if (block.type === 'text') {
           return { type: 'text', text: block.text };
         } else if (block.type === 'tool_use') {
           return {
