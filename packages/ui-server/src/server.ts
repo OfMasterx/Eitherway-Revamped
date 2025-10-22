@@ -531,10 +531,9 @@ await fastify.register(async (fastify) => {
               webSearch: agentConfig.tools.webSearch,
             });
 
-            // Set database context for file operations
-            if (session.app_id) {
-              dbAgent.setDatabaseContext(fileStore, session.app_id, sessionId);
-            }
+            // ALWAYS set database context - tools need db access even without app_id
+            // (Web3 tools need database for contract deployment, which happens before app files are created)
+            dbAgent.setDatabaseContext(fileStore, session.app_id || sessionId, sessionId);
 
             // Message ID will be set when DatabaseAgent creates the message
             let accumulatedText = '';

@@ -333,10 +333,13 @@ export class ToolRunner {
   /**
    * Set database context for file operations
    */
-  setDatabaseContext(fileStore: any, appId: string, sessionId?: string): void {
+  setDatabaseContext(fileStore: any, appId: string, sessionId?: string, db?: any): void {
     this.context.fileStore = fileStore;
     this.context.appId = appId;
     this.context.sessionId = sessionId;
+    if (db) {
+      this.context.db = db;
+    }
   }
 
   /**

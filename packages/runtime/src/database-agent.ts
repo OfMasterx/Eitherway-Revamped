@@ -344,6 +344,6 @@ export class DatabaseAgent {
    * Set database context for file operations
    */
   setDatabaseContext(fileStore: any, appId: string, sessionId?: string): void {
-    this.agent.setDatabaseContext(fileStore, appId, sessionId);
+    this.agent.setDatabaseContext(fileStore, appId, sessionId, this.db);
   }
 }

@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ContractPanel } from '../web3/ContractPanel';
 
 // TYPES
 
@@ -17,7 +18,7 @@ interface DeploymentPanelProps {
   onClose?: () => void;
 }
 
-type DeployProvider = 'netlify' | 'vercel' | 'github';
+type DeployProvider = 'netlify' | 'vercel' | 'github' | 'web3';
 
 interface DeployResult {
   provider: DeployProvider;
@@ -49,7 +50,7 @@ export function DeploymentPanel({ appId, sessionId, userId, initialTab = 'deploy
 // DEPLOY MODAL (MULTI-PROVIDER)
 
 function DeployModal({ appId, sessionId, userId, onClose }: Omit<DeploymentPanelProps, 'initialTab'>) {
-  const [provider, setProvider] = useState<DeployProvider>('netlify');
+  const [provider, setProvider] = useState<DeployProvider>('web3');
 
   // Netlify state
   const [netlifyToken, setNetlifyToken] = useState('');
@@ -440,10 +441,29 @@ function DeployModal({ appId, sessionId, userId, onClose }: Omit<DeploymentPanel
           >
             GitHub
           </button>
+          <button
+            onClick={() => setProvider('web3')}
+            className={`px-4 py-2 rounded-t-lg font-medium text-sm transition-colors ${
+              provider === 'web3'
+                ? 'bg-[#0e0e0e] text-cyan-400 border border-b-0 border-gray-800'
+                : 'text-black hover:text-cyan-400'
+            }`}
+          >
+            ⬡ Web3 Contracts
+          </button>
         </div>
 
         {/* Content */}
         <div className="p-6 min-h-[340px]">
+          {/* Web3 Contracts */}
+          {provider === 'web3' && (
+            <ContractPanel
+              userId={userId}
+              appId={appId}
+              sessionId={sessionId}
+            />
+          )}
+
           {/* Netlify Form */}
           {provider === 'netlify' && (
             <div className="space-y-4">

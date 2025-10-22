@@ -121,6 +121,7 @@ export interface ExecutionContext {
   fileStore?: any; // FileStore from @eitherway/database
   appId?: string; // App ID for database file operations
   sessionId?: string; // Session ID for context
+  db?: any; // DatabaseClient - allows tools to access database services directly
 }
 
 export interface ToolExecutorResult {

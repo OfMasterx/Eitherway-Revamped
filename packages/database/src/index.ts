@@ -64,4 +64,7 @@ export type { ExtractedColor, PaletteExtractionOptions } from './services/palett
 export { ContractService, SUPPORTED_CHAINS } from './services/contract-service.js';
 export type { CompileContractParams, CompileResult, DeployContractParams, DeployResult, ChainConfig } from './services/contract-service.js';
 
+export { ContractCodeGenerator } from './services/contract-code-generator.js';
+export type { GeneratedContractFiles, ContractInfo } from './services/contract-code-generator.js';
+
 export type * from './types.js';

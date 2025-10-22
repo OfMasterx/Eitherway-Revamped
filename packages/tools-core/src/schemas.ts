@@ -183,6 +183,68 @@ export const TOOL_SCHEMAS: Record<string, ToolDefinition> = {
       additionalProperties: false,
     },
   },
+
+  'deploy-smart-contract': {
+    name: 'deploy-smart-contract',
+    description: 'Deploy an ERC-20 token or ERC-721 NFT smart contract to Ethereum testnet. This tool compiles and deploys a smart contract to a blockchain testnet (Sepolia, Base Sepolia, or Arbitrum Sepolia). Returns the deployed contract\'s address, transaction hash, and block explorer URL. Use this when the user wants to create a cryptocurrency/token, build an NFT collection, deploy any blockchain-based asset, or create a decentralized application (dApp). After deployment, you MUST call generate-contract-code to get the TypeScript/React code for interacting with the contract.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        contractType: {
+          type: 'string',
+          enum: ['erc20', 'erc721'],
+          description: 'Type of smart contract to deploy. "erc20" for fungible tokens (currencies), "erc721" for non-fungible tokens (NFTs)'
+        },
+        name: {
+          type: 'string',
+          description: 'Full name of the token/NFT collection (e.g., "My Gaming Token", "Awesome NFT Collection")'
+        },
+        symbol: {
+          type: 'string',
+          description: 'Short symbol/ticker for the token (2-5 uppercase letters, e.g., "GAME", "ANFT")'
+        },
+        totalSupply: {
+          type: 'string',
+          description: 'Total supply of tokens (required for ERC-20 only). Use large numbers like "1000000" for one million tokens'
+        },
+        chainId: {
+          type: 'number',
+          enum: [11155111, 84532, 421614],
+          description: 'Blockchain to deploy to: 11155111 (Sepolia - default), 84532 (Base Sepolia), 421614 (Arbitrum Sepolia). Always use Sepolia unless user specifically requests another chain'
+        },
+        userId: {
+          type: 'string',
+          description: 'User ID (required for tracking)'
+        },
+        appId: {
+          type: 'string',
+          description: 'App ID to link this contract to (optional)'
+        },
+        sessionId: {
+          type: 'string',
+          description: 'Session ID (optional)'
+        }
+      },
+      required: ['contractType', 'name', 'symbol', 'userId'],
+      additionalProperties: false
+    }
+  },
+
+  'generate-contract-code': {
+    name: 'generate-contract-code',
+    description: 'Generate TypeScript/React code for interacting with a deployed smart contract. This tool generates production-ready, type-safe code including: (1) Contract ABI defining contract functions, (2) Contract addresses where deployed, (3) React hooks for reading/writing data (useTokenName, useTokenBalance, useTransfer, etc.), (4) Ready-to-use React components with UI, (5) Wagmi configuration for wallet connection. You MUST call this immediately after deploy-smart-contract to get the code needed to build the app UI. The generated files should be written to the project using either-write. After writing these files, you must also update package.json to include wagmi dependencies and create/modify the app layout to wrap components in WagmiProvider.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        contractId: {
+          type: 'string',
+          description: 'The contract ID returned from deploy-smart-contract tool'
+        }
+      },
+      required: ['contractId'],
+      additionalProperties: false
+    }
+  },
 };
 
 // Export individual schemas for direct access
@@ -191,6 +253,8 @@ export const EITHER_SEARCH_FILES_SCHEMA = TOOL_SCHEMAS['either-search-files'];
 export const EITHER_WRITE_SCHEMA = TOOL_SCHEMAS['either-write'];
 export const EITHER_LINE_REPLACE_SCHEMA = TOOL_SCHEMAS['either-line-replace'];
 export const IMAGEGEN_SCHEMA = TOOL_SCHEMAS['eithergen--generate_image'];
+export const DEPLOY_SMART_CONTRACT_SCHEMA = TOOL_SCHEMAS['deploy-smart-contract'];
+export const GENERATE_CONTRACT_CODE_SCHEMA = TOOL_SCHEMAS['generate-contract-code'];
 
 // Get all tool definitions as array for Claude API
 export function getAllToolDefinitions(): ToolDefinition[] {

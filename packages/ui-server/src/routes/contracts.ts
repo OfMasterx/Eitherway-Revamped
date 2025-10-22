@@ -17,7 +17,7 @@ import {
   ContractService,
   ContractsRepository,
   UsersRepository,
-  SUPPORTED_CHAINS,
+  ContractCodeGenerator,
   type CompileContractParams,
   type DeployContractParams
 } from '@eitherway/database';
@@ -386,6 +386,47 @@ export async function registerContractRoutes(
         success: false,
         error: 'Failed to delete contract',
         message: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/contracts/:id/generate-code
+   * Generate TypeScript/React code for a deployed contract
+   */
+  fastify.get<{
+    Params: { id: string };
+  }>('/api/contracts/:id/generate-code', async (request, reply) => {
+    const { id } = request.params;
+
+    try {
+      const codeGenerator = new ContractCodeGenerator(db);
+      const files = await codeGenerator.generateContractFiles(id);
+
+      return reply.code(200).send({
+        success: true,
+        files: {
+          abiFile: files.abiFile,
+          addressesFile: files.addressesFile,
+          hooksFile: files.hooksFile,
+          componentFile: files.componentFile,
+          wagmiConfigFile: files.wagmiConfigFile
+        }
+      });
+
+    } catch (error: any) {
+      console.error('[Contracts] Code generation error:', error);
+
+      if (error.message?.includes('not found')) {
+        return reply.code(404).send({
+          success: false,
+          error: 'Contract not found'
+        });
+      }
+
+      return reply.code(400).send({
+        success: false,
+        error: error.message || 'Failed to generate code'
       });
     }
   });
