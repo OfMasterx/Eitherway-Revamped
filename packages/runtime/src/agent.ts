@@ -254,7 +254,7 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
      {cryptos.map(coin => (
        <div key={coin.id}>
          <img src={coin.iconUrl} alt={coin.name} className="w-8 h-8 rounded-full" />
-         <span>{coin.name}: ${coin.price}</span>
+         <span>{coin.name}: \${coin.price}</span>
        </div>
      ))}
      \`\`\`
