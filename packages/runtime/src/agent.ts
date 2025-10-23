@@ -251,12 +251,12 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
      };
 
      // Render with icon URL from API
-     {cryptos.map(coin => (
-       <div key={coin.id}>
-         <img src={coin.iconUrl} alt={coin.name} className="w-8 h-8 rounded-full" />
-         <span>{coin.name}: \${coin.price}</span>
+     \{cryptos.map(coin => (
+       <div key=\{coin.id\}>
+         <img src=\{coin.iconUrl\} alt=\{coin.name\} className="w-8 h-8 rounded-full" />
+         <span>\{coin.name\}: \${coin.price}</span>
        </div>
-     ))}
+     ))\}
      \`\`\`
 
      COMMON MISTAKE TO AVOID:
