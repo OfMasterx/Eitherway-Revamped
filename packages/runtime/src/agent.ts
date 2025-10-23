@@ -186,7 +186,7 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
   Add to package.json dependencies and import as React components:
 
   EXAMPLE with lucide-react (USE THIS BY DEFAULT):
-  ```jsx
+  \`\`\`jsx
   import { Search, Menu, User, Settings, Home, ChevronDown, X,
            Check, Calendar, Clock, Heart, Star, ShoppingCart,
            Edit, Trash, Plus, Minus, ArrowRight } from 'lucide-react';
@@ -201,7 +201,7 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
       </nav>
     );
   }
-  ```
+  \`\`\`
 
   Common lucide-react icons for UI:
   - Navigation: Menu, Home, Search, User, Settings, LogIn, LogOut
@@ -232,7 +232,7 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
 
      First choice (for apps WITH live price data):
      Use icon URLs directly from CoinGecko API response:
-     ```jsx
+     \`\`\`jsx
      // CORRECT APPROACH - CoinGecko API includes image.small, image.large
      const fetchCryptoData = async () => {
        const response = await fetch('/api/proxy?url=https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum');
@@ -257,7 +257,7 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
          <span>{coin.name}: ${coin.price}</span>
        </div>
      ))}
-     ```
+     \`\`\`
 
      COMMON MISTAKE TO AVOID:
      ✗ Fetching price data from API but generating SVG icons separately
@@ -265,14 +265,14 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
 
      Second choice (for apps WITHOUT live price data):
      Use cryptocurrency-icons package for static crypto icons:
-     ```bash
+     \`\`\`bash
      npm install cryptocurrency-icons
-     ```
-     ```jsx
+     \`\`\`
+     \`\`\`jsx
      import { Bitcoin, Ethereum, Solana, Cardano, Dogecoin } from 'cryptocurrency-icons';
      <Bitcoin className="w-8 h-8" />
      <Ethereum className="w-8 h-8 text-purple-600" />
-     ```
+     \`\`\`
 
      Fallback (for obscure coins not in API/package):
      Use direct URLs from established crypto icon CDNs:
@@ -283,39 +283,39 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
 
   B. COUNTRY FLAGS:
      First choice: react-world-flags package
-     ```bash
+     \`\`\`bash
      npm install react-world-flags
-     ```
-     ```jsx
+     \`\`\`
+     \`\`\`jsx
      import Flag from 'react-world-flags';
      <Flag code="US" className="w-8 h-5" />
      <Flag code="GB" className="w-8 h-5" />
-     ```
+     \`\`\`
 
      Alternative: Use flagcdn.com CDN with ISO country codes
-     ```jsx
+     \`\`\`jsx
      <img src="https://flagcdn.com/w40/us.png" alt="USA" className="w-8 h-5" />
      <img src="https://flagcdn.com/w80/gb.png" alt="UK" className="w-12 h-8" />
-     ```
+     \`\`\`
 
   C. COMPANY/BRAND LOGOS:
      First choice: simple-icons package (3000+ brand logos)
-     ```bash
+     \`\`\`bash
      npm install simple-icons
-     ```
+     \`\`\`
      Search available brands: https://simpleicons.org
 
      Alternative: Clearbit Logo API (uses company domains)
-     ```jsx
+     \`\`\`jsx
      <img src="https://logo.clearbit.com/google.com" alt="Google" className="w-8 h-8" />
      <img src="https://logo.clearbit.com/apple.com" alt="Apple" className="w-8 h-8" />
-     ```
+     \`\`\`
 
   D. PAYMENT METHOD ICONS:
      Use react-payment-icons-inline package for credit cards, PayPal, etc.
-     ```bash
+     \`\`\`bash
      npm install react-payment-icons-inline
-     ```
+     \`\`\`
 
   E. SOCIAL PLATFORM ICONS:
      Use react-social-icons or simple-icons for social media logos
@@ -343,12 +343,12 @@ ICONS AND VISUAL ELEMENTS (CRITICAL - STRICT 3-TIER PRIORITY):
   ✓ Icon cannot be found via web_search for existing SVG code
 
   Only after ALL checks pass, use inline SVG:
-  ```jsx
+  \`\`\`jsx
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
        fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
   </svg>
-  ```
+  \`\`\`
 
   COMMON MISTAKE TO AVOID:
   Using inline SVG for common icons (menu, search, user) → USE lucide-react

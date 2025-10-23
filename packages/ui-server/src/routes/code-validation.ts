@@ -73,20 +73,6 @@ interface ValidationRequest {
   files: Record<string, string>; // filePath -> content
 }
 
-interface ValidationResponse {
-  issues: Array<{
-    file: string;
-    line?: number;
-    column?: number;
-    issue: string;
-    severity: 'error' | 'warning' | 'info';
-    suggestion?: string;
-    autoFixed?: boolean;
-  }>;
-  fixedFiles: Map<string, string>;
-  success: boolean;
-}
-
 export function registerCodeValidationRoutes(fastify: FastifyInstance) {
   /**
    * POST /api/sessions/:id/validate-code
@@ -96,7 +82,6 @@ export function registerCodeValidationRoutes(fastify: FastifyInstance) {
     Params: { id: string };
     Body: ValidationRequest;
   }>('/api/sessions/:id/validate-code', async (request, reply) => {
-    const { id: sessionId } = request.params;
     const { files } = request.body;
 
     if (!files || Object.keys(files).length === 0) {
