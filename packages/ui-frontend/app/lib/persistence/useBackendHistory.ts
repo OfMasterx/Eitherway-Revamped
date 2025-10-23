@@ -89,7 +89,7 @@ export function useBackendHistory() {
         setFiles(filesData.files || []);
         setSessionTitle(session.title || 'Untitled Chat');
 
-        console.log('📂 [Backend History] Loaded session:', sessionId);
+        console.log(' [Backend History] Loaded session:', sessionId);
         console.log('   Messages:', transformedMessages.length);
         console.log('   Files:', filesData.files?.length || 0);
 

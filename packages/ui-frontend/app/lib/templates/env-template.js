@@ -132,19 +132,19 @@ export const readmeTemplate = `
 ## Features
 
 ### When Configured (Production Mode)
-- ✅ Real wallet connections (MetaMask, WalletConnect, etc.)
-- ✅ Live blockchain data from your RPC provider
-- ✅ Real-time portfolio balances
-- ✅ Live price feeds
-- ✅ Transaction signing and sending
-- ✅ Multi-chain support
+-  Real wallet connections (MetaMask, WalletConnect, etc.)
+-  Live blockchain data from your RPC provider
+-  Real-time portfolio balances
+-  Live price feeds
+-  Transaction signing and sending
+-  Multi-chain support
 
 ### Demo Mode (No Configuration)
-- ✅ UI fully functional
-- ✅ Wallet connection UI works (but doesn't connect)
-- ⚠️ Shows sample data instead of real data
-- ⚠️ Transactions disabled
-- ℹ️ Banner shows "Demo Mode"
+-  UI fully functional
+-  Wallet connection UI works (but doesn't connect)
+-  Shows sample data instead of real data
+-  Transactions disabled
+- ℹ Banner shows "Demo Mode"
 
 ## Architecture
 
@@ -185,7 +185,7 @@ railway up
 
 ## Security Notes
 
-⚠️ **Never commit .env.local or expose API keys**
+ **Never commit .env.local or expose API keys**
 - Add \`.env.local\` to \`.gitignore\`
 - Use environment variables in production
 - Rotate keys regularly

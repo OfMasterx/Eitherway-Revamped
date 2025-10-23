@@ -11,7 +11,7 @@ export async function debugWebContainer() {
 
     // Listen to all port events for debugging
     wc.on('port', (port, type, url) => {
-      logger.info(`🔌 Port Event Debug:`, {
+      logger.info(` Port Event Debug:`, {
         port,
         type,
         url,
@@ -19,16 +19,16 @@ export async function debugWebContainer() {
       });
 
       if (url.includes('localhost')) {
-        logger.warn(`⚠️ Localhost URL detected: ${url}`);
+        logger.warn(` Localhost URL detected: ${url}`);
         logger.warn('WebContainer should provide a unique URL like https://[id].webcontainerapp.io');
       } else {
-        logger.info(`✅ WebContainer URL: ${url}`);
+        logger.info(` WebContainer URL: ${url}`);
       }
     });
 
     // Listen to server ready events
     wc.on('server-ready', (port, url) => {
-      logger.info(`🚀 Server Ready - Port: ${port}, URL: ${url}`);
+      logger.info(` Server Ready - Port: ${port}, URL: ${url}`);
     });
 
     const fs = wc.fs;

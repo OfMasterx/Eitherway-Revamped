@@ -83,7 +83,7 @@ async function clearViteCache(webcontainer: WebContainer, sessionRoot: string): 
         // Might fail if not empty, that's ok
       }
 
-      logger.info('🧹 Cleared Vite cache (node_modules/.vite) to force dependency re-optimization');
+      logger.info(' Cleared Vite cache (node_modules/.vite) to force dependency re-optimization');
     } catch {
       // .vite directory doesn't exist yet, nothing to clear
       logger.debug('No Vite cache to clear (first run or cache already cleared)');
@@ -119,7 +119,7 @@ async function checkAndRunInstall(webcontainer: WebContainer, sessionRoot: strin
     }
 
     // Hash changed - run install
-    logger.info('📦 package.json changed, running npm install...');
+    logger.info(' package.json changed, running npm install...');
     installInProgress = true;
 
     try {
@@ -136,7 +136,7 @@ async function checkAndRunInstall(webcontainer: WebContainer, sessionRoot: strin
       const exitCode = await installProcess.exit;
 
       if (exitCode === 0) {
-        logger.info('✅ npm install completed successfully');
+        logger.info(' npm install completed successfully');
         lastPackageJsonHash = currentHash; // Update hash only on success
 
         // CRITICAL: Clear Vite cache to prevent "Outdated Optimize Dep" errors
@@ -147,13 +147,13 @@ async function checkAndRunInstall(webcontainer: WebContainer, sessionRoot: strin
         // Give Vite a moment to detect the cache is gone
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        logger.info('💡 Tip: If you see module errors, the preview will auto-refresh once Vite re-optimizes dependencies');
+        logger.info(' Tip: If you see module errors, the preview will auto-refresh once Vite re-optimizes dependencies');
       } else {
-        logger.error(`❌ npm install failed with exit code ${exitCode}`);
+        logger.error(` npm install failed with exit code ${exitCode}`);
         // Don't update hash so it will retry next time
       }
     } catch (error) {
-      logger.error('❌ npm install error:', error);
+      logger.error(' npm install error:', error);
       // Don't update hash so it will retry next time
     } finally {
       installInProgress = false;
@@ -177,12 +177,12 @@ async function ensurePreviewRegistered(
   const existingPreview = previews.find((p) => p.port === port);
 
   if (existingPreview) {
-    logger.info(`✅ Preview already registered for port ${port} via port event`);
+    logger.info(` Preview already registered for port ${port} via port event`);
     return;
   }
 
   // Port event didn't fire, try manual registration
-  logger.warn(`⚠️ Port event didn't fire for port ${port}, attempting manual registration...`);
+  logger.warn(` Port event didn't fire for port ${port}, attempting manual registration...`);
 
   try {
     // Try to get server URL - WebContainer exposes this through the origin property
@@ -200,16 +200,16 @@ async function ensurePreviewRegistered(
 
     if (url) {
       workbenchStore.registerPreview(port, url);
-      logger.info(`✅ Preview manually registered at ${url}`);
+      logger.info(` Preview manually registered at ${url}`);
     } else {
-      logger.error('❌ Could not determine WebContainer URL - preview may not load');
+      logger.error(' Could not determine WebContainer URL - preview may not load');
       logger.error(
         '   WebContainer properties:',
         Object.keys(wcExtended as any).filter((k) => !k.startsWith('_')),
       );
     }
   } catch (error) {
-    logger.error('❌ Error during manual preview registration:', error);
+    logger.error(' Error during manual preview registration:', error);
   }
 }
 

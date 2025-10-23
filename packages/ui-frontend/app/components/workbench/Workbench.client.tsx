@@ -97,14 +97,14 @@ export const Workbench = memo(({ chatStarted, isStreaming }: WorkspaceProps) => 
     workbenchStore
       .saveCurrentDocument()
       .then(() => {
-        console.log('[Workbench] ✅ File saved successfully');
+        console.log('[Workbench]  File saved successfully');
         toast.success(`Saved ${fileName}`, {
           position: 'bottom-right',
           autoClose: 2000,
         });
       })
       .catch((error) => {
-        console.error('[Workbench] ❌ Save failed:', error);
+        console.error('[Workbench]  Save failed:', error);
         // Error toast is already shown by FilesStore, but we can add a fallback
         if (!error.message.includes('Backend sync failed')) {
           toast.error(`Failed to save ${fileName}: ${error.message}`, {

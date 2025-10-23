@@ -119,7 +119,7 @@ export async function syncFilesToWebContainer(
         const fileData = await fetchFileContent(sessionId, filePath);
 
         // DEBUG: Log first 100 chars of content to verify it's changing
-        logger.debug(`📥 Fetched ${filePath}: ${fileData.content.substring(0, 100)}...`);
+        logger.debug(` Fetched ${filePath}: ${fileData.content.substring(0, 100)}...`);
 
         if (fileData.isBinary && fileData.content) {
           // Binary file: decode base64 and write as Uint8Array for Vite dev server
@@ -142,7 +142,7 @@ export async function syncFilesToWebContainer(
           if ((fileData.mimeType || '').toLowerCase().includes('image/png') && bytes.length >= 8) {
             const pngMagic = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
             const matches = pngMagic.every((byte, i) => bytes[i] === byte);
-            logger.debug(`PNG magic: ${matches ? '✓ Valid' : '✗ Invalid'} (${Array.from(bytes.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ')})`);
+            logger.debug(`PNG magic: ${matches ? ' Valid' : ' Invalid'} (${Array.from(bytes.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ')})`);
           }
         } else {
           // Text file: write as string
@@ -155,14 +155,14 @@ export async function syncFilesToWebContainer(
 
         // Provide more detailed error information
         if (error.message?.includes('404') || error.message?.includes('Not Found')) {
-          logger.error(`❌ File not found in session workspace: ${filePath}`);
+          logger.error(` File not found in session workspace: ${filePath}`);
           logger.error(`This usually means the file was not properly saved to the session's file system.`);
           logger.error(`Check that the file was written via /api/sessions/${sessionId}/files/write or write-binary`);
         } else if (error.message?.includes('Failed to fetch')) {
-          logger.error(`❌ Network error fetching file: ${filePath}`);
+          logger.error(` Network error fetching file: ${filePath}`);
           logger.error(`Backend server may be unreachable or file endpoint may be down`);
         } else {
-          logger.error(`❌ Unknown error syncing file: ${error.message || error}`);
+          logger.error(` Unknown error syncing file: ${error.message || error}`);
         }
       }
     }

@@ -156,7 +156,7 @@ export class ModelClient {
               inputJson: '',
             };
           } else if ((event.content_block as any).type === 'server_tool_use') {
-            console.log(`[STREAM] 🔍 server_tool_use detected: ${(event.content_block as any).id}`);
+            console.log(`[STREAM]  server_tool_use detected: ${(event.content_block as any).id}`);
             currentToolUse = {
               type: 'server_tool_use',
               id: (event.content_block as any).id,
@@ -164,7 +164,7 @@ export class ModelClient {
               inputJson: '',
             };
           } else if ((event.content_block as any).type === 'web_search_tool_result') {
-            console.log(`[STREAM] ✅ web_search_tool_result detected for: ${(event.content_block as any).tool_use_id}`);
+            console.log(`[STREAM]  web_search_tool_result detected for: ${(event.content_block as any).tool_use_id}`);
             contentBlocks.push({
               type: 'web_search_tool_result',
               tool_use_id: (event.content_block as any).tool_use_id,

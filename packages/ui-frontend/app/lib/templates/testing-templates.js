@@ -401,37 +401,37 @@ jobs:
     - name: Check for inline styles
       run: |
         if grep -r '<style>' --include="*.html" .; then
-          echo "❌ Found inline styles in HTML files"
+          echo " Found inline styles in HTML files"
           exit 1
         fi
-        echo "✅ No inline styles found"
+        echo " No inline styles found"
 
     - name: Verify required files
       run: |
         files=("index.html" "styles.css" ".env.example")
         for file in "\${files[@]}"; do
           if [ ! -f "$file" ]; then
-            echo "❌ Missing required file: $file"
+            echo " Missing required file: $file"
             exit 1
           fi
         done
-        echo "✅ All required files present"
+        echo " All required files present"
 
     - name: Validate CSS variables
       run: |
         if ! grep -q ':root' styles.css; then
-          echo "❌ Missing :root CSS variables in styles.css"
+          echo " Missing :root CSS variables in styles.css"
           exit 1
         fi
-        echo "✅ CSS variables found"
+        echo " CSS variables found"
 
     - name: Check wallet configuration
       run: |
         if ! grep -q 'WALLETCONNECT_PROJECT_ID' .env.example; then
-          echo "❌ Missing WALLETCONNECT_PROJECT_ID in .env.example"
+          echo " Missing WALLETCONNECT_PROJECT_ID in .env.example"
           exit 1
         fi
-        echo "✅ Environment configuration valid"
+        echo " Environment configuration valid"
 
   test:
     name: Run Tests
@@ -494,10 +494,10 @@ jobs:
     - name: Check build output
       run: |
         if [ ! -d "dist" ] && [ ! -d "build" ]; then
-          echo "❌ No build output found"
+          echo " No build output found"
           exit 1
         fi
-        echo "✅ Build successful"
+        echo " Build successful"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3

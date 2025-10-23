@@ -11,11 +11,11 @@ export function GoogleAuthButton({ onSuccess, onError, className }: GoogleAuthBu
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log('🔑 GoogleAuthButton mounted, onSuccess:', onSuccess, 'onError:', onError);
+    console.log(' GoogleAuthButton mounted, onSuccess:', onSuccess, 'onError:', onError);
   }, [onSuccess, onError]);
 
   const handleGoogleLogin = () => {
-    console.log('🔑 Google login button clicked!');
+    console.log(' Google login button clicked!');
     setIsLoading(true);
 
     const clientId = '631136632309-58183vsuk8cit3qrsfie88as8lsric21.apps.googleusercontent.com';
@@ -25,7 +25,7 @@ export function GoogleAuthButton({ onSuccess, onError, className }: GoogleAuthBu
 
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=${responseType}&access_type=offline&prompt=consent`;
 
-    console.log('🔗 Opening popup with URL:', googleAuthUrl);
+    console.log(' Opening popup with URL:', googleAuthUrl);
 
     const popup = window.open(googleAuthUrl, 'googleAuth', 'width=500,height=600,scrollbars=yes,resizable=yes');
 
@@ -43,16 +43,16 @@ export function GoogleAuthButton({ onSuccess, onError, className }: GoogleAuthBu
         }
 
         if (event.data && typeof event.data === 'object' && event.data.type) {
-          console.log('📨 Received Google OAuth message:', event.data);
+          console.log(' Received Google OAuth message:', event.data);
 
           if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
-            console.log('✅ Google auth success, user:', event.data.user);
-            console.log('🎯 Calling onSuccess with user data');
+            console.log(' Google auth success, user:', event.data.user);
+            console.log(' Calling onSuccess with user data');
             popup.close();
             onSuccess(event.data.user);
             setIsLoading(false);
           } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
-            console.log('❌ Google auth error:', event.data.error);
+            console.log(' Google auth error:', event.data.error);
             popup.close();
             onError();
             setIsLoading(false);
@@ -66,7 +66,7 @@ export function GoogleAuthButton({ onSuccess, onError, className }: GoogleAuthBu
   };
 
   useEffect(() => {
-    console.log('🔑 GoogleAuthButton mounted, onSuccess:', onSuccess, 'onError:', onError);
+    console.log(' GoogleAuthButton mounted, onSuccess:', onSuccess, 'onError:', onError);
   }, [onSuccess, onError]);
 
   return (

@@ -17,7 +17,7 @@ async function main() {
 
   console.log('Results:');
   for (const check of result.checks) {
-    const icon = check.passed ? '✅' : '❌';
+    const icon = check.passed ? '' : '';
     console.log(`  ${icon} ${check.name}`);
     if (check.details) {
       console.log(`     ${check.details}`);
@@ -25,7 +25,7 @@ async function main() {
   }
 
   console.log('\n' + '='.repeat(50));
-  console.log(`Overall: ${result.passed ? '✅ PASSED' : '❌ FAILED'}`);
+  console.log(`Overall: ${result.passed ? ' PASSED' : ' FAILED'}`);
   console.log('='.repeat(50) + '\n');
 
   if (!result.passed) {

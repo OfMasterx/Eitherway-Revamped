@@ -135,7 +135,7 @@ function navigateToSession(sessionId: string) {
   const url = new URL(window.location.href);
   url.pathname = `/chat/${sessionId}`;
   window.history.replaceState({}, '', url);
-  logger.debug('📍 URL updated to:', url.pathname);
+  logger.debug(' URL updated to:', url.pathname);
 }
 
 /**
@@ -174,7 +174,7 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
 
   try {
     // 1) Fetch the latest kit with assets (from UI server)
-    logger.info('🔄 Syncing brand kit assets to session:', sessionId, 'Brand Kit:', pendingBrandKitId);
+    logger.info(' Syncing brand kit assets to session:', sessionId, 'Brand Kit:', pendingBrandKitId);
     const res = await fetch(`/api/brand-kits/${pendingBrandKitId}`);
     if (!res.ok) {
       throw new Error(`Failed to fetch brand kit: ${res.statusText}`);
@@ -192,15 +192,15 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
     // 2) Sync into client WebContainer
     logger.info('⏳ Obtaining WebContainer instance...');
     const wc = await webcontainer;
-    logger.info('✓ WebContainer instance obtained, starting asset sync...');
+    logger.info(' WebContainer instance obtained, starting asset sync...');
 
     const result = await syncBrandAssetsToWebContainer(wc, assets);
     logger.info(
-      `✅ Client WebContainer sync complete: ${result.synced} synced, ${result.failed} failed, ${result.skipped} skipped`,
+      ` Client WebContainer sync complete: ${result.synced} synced, ${result.failed} failed, ${result.skipped} skipped`,
     );
 
     if (result.failed > 0) {
-      logger.warn(`⚠️  ${result.failed} assets failed to sync to WebContainer`);
+      logger.warn(`  ${result.failed} assets failed to sync to WebContainer`);
     }
 
     if (result.synced === 0 && assets.length > 0) {
@@ -219,7 +219,7 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
           continue;
         }
 
-        logger.info(`🔄 Syncing asset to server: ${asset.fileName} → ${destPath}`);
+        logger.info(` Syncing asset to server: ${asset.fileName} → ${destPath}`);
         logger.debug(`Storage key: ${asset.storageKey}`);
 
         // Fetch asset bytes from storage with retry logic
@@ -238,7 +238,7 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
             }
 
             assetBuffer = await assetRes.arrayBuffer();
-            logger.debug(`✓ Fetched ${assetBuffer.byteLength} bytes for ${asset.fileName}`);
+            logger.debug(` Fetched ${assetBuffer.byteLength} bytes for ${asset.fileName}`);
             break; // Success, exit retry loop
           } catch (err: any) {
             fetchError = err;
@@ -289,7 +289,7 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
         }
 
         const writeResult = await writeRes.json();
-        logger.info(`✅ Server synced: ${destPath} (${writeResult.size} bytes)`);
+        logger.info(` Server synced: ${destPath} (${writeResult.size} bytes)`);
 
         // The file is written successfully, but may not be immediately readable
         // due to async database commit. The file will be available when the agent
@@ -297,16 +297,16 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
 
         serverSynced++;
       } catch (error: any) {
-        logger.error(`❌ Failed to sync asset ${asset.fileName} to server:`, error);
+        logger.error(` Failed to sync asset ${asset.fileName} to server:`, error);
         serverFailed.push(`${asset.fileName}: ${error.message}`);
         // Continue with other assets
       }
     }
 
-    logger.info(`✓ Synced ${serverSynced}/${assets.length} assets to server workspace (session: ${sessionId})`);
+    logger.info(` Synced ${serverSynced}/${assets.length} assets to server workspace (session: ${sessionId})`);
 
     if (serverFailed.length > 0) {
-      logger.error(`❌ Failed to sync ${serverFailed.length} assets:`, serverFailed);
+      logger.error(` Failed to sync ${serverFailed.length} assets:`, serverFailed);
       toast.error(`Some brand assets failed to sync: ${serverFailed[0]}`);
     }
 
@@ -317,7 +317,7 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
     const colors = data?.brandKit?.colors ?? [];
     const brandKitName = data?.brandKit?.name || 'Brand Kit';
 
-    logger.info(`📝 Preparing brand kit manifest: ${assets.length} assets, ${colors.length} colors`);
+    logger.info(` Preparing brand kit manifest: ${assets.length} assets, ${colors.length} colors`);
 
     if (serverSynced > 0 || assets.length > 0) {
       const manifest = {
@@ -371,8 +371,8 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
         });
 
         if (manifestRes.ok) {
-          logger.info(`✓ Server: Brand kit manifest created with ${assets.length} assets and ${colors.length} colors`);
-          logger.info('✓ Server: Manifest includes full metadata: kind, variants, AI analysis');
+          logger.info(` Server: Brand kit manifest created with ${assets.length} assets and ${colors.length} colors`);
+          logger.info(' Server: Manifest includes full metadata: kind, variants, AI analysis');
         } else {
           logger.error(`Failed to write server manifest: ${manifestRes.status} ${manifestRes.statusText}`);
         }
@@ -380,22 +380,22 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
         // Also write manifest to CLIENT WebContainer (for potential client-side access)
         const wc = await webcontainer;
         await wc.fs.writeFile('brand-kit.json', manifestJson);
-        logger.info('✓ Client: Brand kit manifest written to WebContainer');
+        logger.info(' Client: Brand kit manifest written to WebContainer');
 
       } catch (error) {
         logger.error('Failed to write brand kit manifest:', error);
       }
     } else if (serverSynced === 0 && assets.length > 0) {
-      logger.warn('⚠️  Skipping brand kit manifest creation - no assets synced successfully');
+      logger.warn('  Skipping brand kit manifest creation - no assets synced successfully');
     }
 
-    logger.info(`✅ Brand assets fully synced to session ${sessionId}`);
+    logger.info(` Brand assets fully synced to session ${sessionId}`);
 
     // 5) Archive the brand kit and clear UI after successful sync
     // This ensures the brand kit doesn't persist across different app requests
     if (userId && pendingBrandKitId) {
       try {
-        logger.info('🔄 Archiving brand kit after successful sync:', pendingBrandKitId);
+        logger.info(' Archiving brand kit after successful sync:', pendingBrandKitId);
         const archiveRes = await fetch(`/api/brand-kits/user/${encodeURIComponent(userId)}/archive-active`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -403,11 +403,11 @@ async function ensureBrandAssetsSyncedBeforeStream(sessionId: string, userId: st
         });
 
         if (archiveRes.ok) {
-          logger.info('✅ Brand kit archived successfully');
+          logger.info(' Brand kit archived successfully');
           // Clear frontend state
           brandKitStore.setKey('pendingBrandKitId', null);
           brandKitStore.setKey('uploadedAssets', []);
-          logger.info('✅ Brand kit UI cleared');
+          logger.info(' Brand kit UI cleared');
         } else {
           logger.warn('Failed to archive brand kit:', archiveRes.status);
         }
@@ -547,7 +547,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
   // Keep messages in sync with initialMessages when loading from backend
   useEffect(() => {
     if (initialMessages.length > 0 && messages.length === 0) {
-      console.log('📥 [Chat] Loading', initialMessages.length, 'messages from backend history');
+      console.log(' [Chat] Loading', initialMessages.length, 'messages from backend history');
       setMessages(initialMessages);
       setChatStarted(true);
     }
@@ -555,11 +555,11 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
 
   useEffect(() => {
     if (files.length > 0 && sessionId) {
-      console.log('📁 [Chat] Syncing', files.length, 'files to WebContainer for session:', sessionId);
+      console.log(' [Chat] Syncing', files.length, 'files to WebContainer for session:', sessionId);
 
       // Auto-show workbench when loading from history
       workbenchStore.showWorkbench.set(true);
-      logger.info('✨ Auto-showing workbench for historical session');
+      logger.info(' Auto-showing workbench for historical session');
 
       // Async function to sync files and start dev server
       (async () => {
@@ -574,7 +574,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
 
             // Initialize session context before syncing files
             setActiveSession(sessionId, appId);
-            logger.info(`✅ Session context initialized for history: ${sessionId}, app: ${appId}`);
+            logger.info(` Session context initialized for history: ${sessionId}, app: ${appId}`);
           } else {
             logger.warn('Failed to fetch session details for context initialization');
           }
@@ -582,16 +582,16 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
           // CRITICAL: Ensure brand assets are synced to both WC and server workspace
           // before loading files. This prevents 404 errors when the preview tries to
           await ensureBrandAssetsSyncedBeforeStream(sessionId, userId);
-          logger.info('✅ Brand assets resynced for historical session');
+          logger.info(' Brand assets resynced for historical session');
 
           await syncFilesToWebContainer(wc, files, sessionId);
-          logger.info('✅ Files synced to WebContainer from history');
+          logger.info(' Files synced to WebContainer from history');
 
           // Start dev server with the loaded files
           await runDevServer(wc, files);
-          logger.info('✅ Dev server started for historical session');
+          logger.info(' Dev server started for historical session');
         } catch (error) {
-          logger.error('❌ Failed to load files from history:', error);
+          logger.error(' Failed to load files from history:', error);
           toast.error('Failed to load workspace files');
         }
       })();
@@ -760,7 +760,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
       // This ensures each new app request gets a clean workspace
       if (messages.length === 0 || !chatStarted) {
         clearSession();
-        console.log('🆕 [Chat] Starting fresh session for new conversation');
+        console.log(' [Chat] Starting fresh session for new conversation');
       }
 
       // Ensure user is authenticated before creating session
@@ -787,7 +787,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
         if (response.ok) {
           const data = await response.json();
           session = data.session;
-          logger.info(`✅ Loaded session: ${session.id} - Title: ${session.title}`);
+          logger.info(` Loaded session: ${session.id} - Title: ${session.title}`);
         } else {
           throw new Error(`Failed to load session ${activeSessionId}: ${response.statusText}`);
         }
@@ -795,12 +795,12 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
         // New conversation - create new session
         if (messages.length === 0 || !chatStarted) {
           clearSession();
-          logger.info('🆕 Starting fresh session for new conversation');
+          logger.info(' Starting fresh session for new conversation');
         }
 
         const title = generateTitleFromPrompt(_input);
         session = await createSession(userId, title);
-        logger.info(`✅ Created new session: ${session.id} - Title: ${title}`);
+        logger.info(` Created new session: ${session.id} - Title: ${title}`);
 
         // Update URL to reflect the new session (no page reload)
         navigateToSession(session.id);
@@ -808,19 +808,19 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
 
       // CRITICAL: Initialize session context immediately for file operations
       setActiveSession(session.id, session.app_id);
-      logger.info(`✅ Session context initialized: ${session.id}, app: ${session.app_id}`);
+      logger.info(` Session context initialized: ${session.id}, app: ${session.app_id}`);
 
       logger.debug('Using session:', session.id);
-      console.log('💬 [Chat Message] Session ID for this message:', session.id);
-      console.log('💬 [Chat Message] URL sessionId param:', sessionId);
-      console.log('💬 [Chat Message] User ID:', userId);
+      console.log(' [Chat Message] Session ID for this message:', session.id);
+      console.log(' [Chat Message] URL sessionId param:', sessionId);
+      console.log(' [Chat Message] User ID:', userId);
 
       // Store session ID in chat store for export/deployment
       chatStore.setKey('sessionId', session.id);
 
       // CRITICAL: Ensure brand assets are synced to THIS session (the one we're about to use)
       // This must happen AFTER session is determined, not during upload
-      logger.info(`🔄 Syncing brand assets to active session: ${session.id}`);
+      logger.info(` Syncing brand assets to active session: ${session.id}`);
       await ensureBrandAssetsSyncedBeforeStream(session.id, userId);
 
       const controller = await streamFromWebSocket({
@@ -862,7 +862,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
                 throw new Error(`Failed to persist metadata: ${response.statusText}`);
               }
 
-              logger.info('✅ Message metadata persisted to database');
+              logger.info(' Message metadata persisted to database');
             } catch (error) {
               logger.error('Failed to persist message metadata:', error);
               // Non-critical error - don't show toast to avoid disrupting user
@@ -908,7 +908,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
           // Auto-show workbench when agent starts writing code
           if (phase === 'code-writing') {
             workbenchStore.showWorkbench.set(true);
-            logger.info('✨ Auto-showing workbench preview - agent started writing code');
+            logger.info(' Auto-showing workbench preview - agent started writing code');
           }
         },
         onReasoning: (text) => {
@@ -937,7 +937,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
 
           // CRITICAL: Initialize session context before syncing files
           setActiveSession(session.id, session.app_id);
-          logger.debug(`✅ Session context initialized for file sync: ${session.id}`);
+          logger.debug(` Session context initialized for file sync: ${session.id}`);
 
           // Sync files to WebContainer
           try {
@@ -954,7 +954,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
                 const treeData = await treeRes.json();
                 if (treeData.files && treeData.files.length > 0) {
                   logger.info(
-                    `✓ Fetched complete file tree: ${treeData.files.length} total files (agent provided ${files.length})`,
+                    ` Fetched complete file tree: ${treeData.files.length} total files (agent provided ${files.length})`,
                   );
 
                   // Debug: Log all file paths in the tree
@@ -973,14 +973,14 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
                   };
 
                   const allPaths = flattenFiles(treeData.files);
-                  logger.debug(`📁 File tree contains: ${allPaths.join(', ')}`);
+                  logger.debug(` File tree contains: ${allPaths.join(', ')}`);
 
                   const hasBrandAsset = allPaths.some((p) => p.includes('public/assets/') && p.endsWith('.png'));
                   if (!hasBrandAsset) {
-                    logger.warn('⚠️  Brand asset NOT found in file tree! This will cause 404 errors.');
+                    logger.warn('  Brand asset NOT found in file tree! This will cause 404 errors.');
                     logger.warn('Files in tree:', allPaths);
                   } else {
-                    logger.info('✓ Brand asset found in file tree');
+                    logger.info(' Brand asset found in file tree');
                   }
 
                   completeFileTree = treeData.files;
@@ -995,7 +995,7 @@ export const ChatImpl = memo(({ initialMessages, files, sessionTitle, sessionId,
             }
 
             await syncFilesToWebContainer(wc, completeFileTree, session.id);
-            logger.info(`✅ Files synced to WebContainer: ${completeFileTree.length} files`);
+            logger.info(` Files synced to WebContainer: ${completeFileTree.length} files`);
 
             // After syncing, run dev server
             await runDevServer(wc, completeFileTree);

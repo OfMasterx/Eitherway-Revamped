@@ -62,7 +62,7 @@ export class PreviewsStore {
       }
 
       if (type === 'open') {
-        logger.info(`✅ Dev server ready at: ${url}`);
+        logger.info(` Dev server ready at: ${url}`);
       }
 
       this.previews.set([...previews]);
@@ -88,7 +88,7 @@ export class PreviewsStore {
       this.#availablePreviews.set(port, previewInfo);
       previews.push(previewInfo);
       this.previews.set([...previews]);
-      logger.info(`📌 Manually registered preview - Port: ${port}, URL: ${url}, Session: ${currentSessionId}`);
+      logger.info(` Manually registered preview - Port: ${port}, URL: ${url}, Session: ${currentSessionId}`);
     } else {
       logger.debug(`Preview already registered for port ${port}`);
     }

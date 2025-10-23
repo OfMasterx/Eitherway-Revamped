@@ -53,9 +53,9 @@ try {
 
   httpsOptions = { https: { cert, key } };
   useHttps = true;
-  console.log('✓ HTTPS certificates found - server will use HTTPS');
+  console.log(' HTTPS certificates found - server will use HTTPS');
 } catch (error) {
-  console.log('⚠ No HTTPS certificates found - server will use HTTP');
+  console.log(' No HTTPS certificates found - server will use HTTP');
   console.log('  Run: npm run setup:https to enable HTTPS for WebContainer preview compatibility');
 }
 
@@ -97,7 +97,7 @@ try {
   db = createDatabaseClient();
   dbConnected = await db.healthCheck();
   if (dbConnected) {
-    console.log('✓ Database connected - using DB-backed VFS');
+    console.log(' Database connected - using DB-backed VFS');
     await registerSessionRoutes(fastify, db);
     await registerSessionFileRoutes(fastify, db);
     await registerImageRoutes(fastify, db);
@@ -110,10 +110,10 @@ try {
     await registerBrandKitRoutes(fastify, db);
     await registerUploadRoutes(fastify, db);
   } else {
-    console.log('⚠ Database not available - files will only be saved to filesystem');
+    console.log(' Database not available - files will only be saved to filesystem');
   }
 } catch (error) {
-  console.log('⚠ Database not configured - files will only be saved to filesystem');
+  console.log(' Database not configured - files will only be saved to filesystem');
 }
 
 /**
@@ -763,7 +763,7 @@ async function enrichPromptWithBrandKit(
 
     const enrichedPrompt = brandContext + originalPrompt;
 
-    console.log('[Brand Kit] ✅ SUCCESS: Injected intelligent brand kit context into prompt!');
+    console.log('[Brand Kit]  SUCCESS: Injected intelligent brand kit context into prompt!');
     console.log('[Brand Kit] Colors:', brandKitData.colors?.length || 0, '| Assets:', brandKitData.assets?.length || 0);
     console.log('[Brand Kit] Brand context length:', brandContext.length, 'chars');
     console.log('[Brand Kit] Brand context preview (first 500 chars):', brandContext.substring(0, 500));
@@ -835,12 +835,12 @@ const PORT = process.env.PORT || DEFAULT_SERVER_PORT;
 try {
   await fastify.listen({ port: Number(PORT), host: '0.0.0.0' });
   const protocol = useHttps ? 'https' : 'http';
-  console.log(`\n🚀 EitherWay UI Server running on ${protocol}://localhost:${PORT}`);
-  console.log(`📁 Workspace: ${WORKSPACE_DIR}`);
+  console.log(`\n EitherWay UI Server running on ${protocol}://localhost:${PORT}`);
+  console.log(` Workspace: ${WORKSPACE_DIR}`);
   if (useHttps) {
-    console.log(`🔐 HTTPS enabled - WebContainer previews will work without mixed content issues\n`);
+    console.log(` HTTPS enabled - WebContainer previews will work without mixed content issues\n`);
   } else {
-    console.log(`⚠️  Using HTTP - WebContainer previews may have mixed content issues`);
+    console.log(`  Using HTTP - WebContainer previews may have mixed content issues`);
     console.log(`   Run: npm run setup:https to enable HTTPS\n`);
   }
 } catch (err) {

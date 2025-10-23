@@ -34,7 +34,7 @@ if (!import.meta.env.SSR) {
         webcontainerContext.loaded = true;
         webcontainerInstance = wc;
 
-        logger.info('✅ WebContainer booted successfully');
+        logger.info(' WebContainer booted successfully');
 
         return wc;
       });
@@ -55,11 +55,11 @@ export async function tearDownWebContainer(): Promise<void> {
   }
 
   try {
-    logger.info('🔄 Tearing down WebContainer...');
+    logger.info(' Tearing down WebContainer...');
     await webcontainerInstance.teardown();
     webcontainerInstance = null;
     webcontainerContext.loaded = false;
-    logger.info('✅ WebContainer torn down successfully');
+    logger.info(' WebContainer torn down successfully');
   } catch (error) {
     logger.error('Error tearing down WebContainer:', error);
     // Force reset even if teardown fails
@@ -74,12 +74,12 @@ export async function tearDownWebContainer(): Promise<void> {
  */
 export async function rebootWebContainer(): Promise<WebContainer> {
   if (!import.meta.env.SSR) {
-    logger.info('🔄 Rebooting WebContainer...');
+    logger.info(' Rebooting WebContainer...');
     const wc = await WebContainer.boot({ workdirName: WORK_DIR_NAME });
     webcontainerInstance = wc;
     webcontainerContext.loaded = true;
     webcontainer = Promise.resolve(wc);
-    logger.info('✅ WebContainer rebooted successfully');
+    logger.info(' WebContainer rebooted successfully');
     return wc;
   }
   throw new Error('Cannot reboot WebContainer in SSR mode');

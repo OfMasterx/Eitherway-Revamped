@@ -366,19 +366,19 @@ export class ImageGenExecutor implements ToolExecutor {
       // Build success message with auto-injection status
       let injectionStatus = '';
       if (injectedFile) {
-        injectionStatus = `\n✨ Auto-injected into: ${injectedFile}\n   The image will now appear in your app preview!\n`;
+        injectionStatus = `\n Auto-injected into: ${injectedFile}\n   The image will now appear in your app preview!\n`;
       } else if (injectedFile === null) {
         // null means already referenced or no suitable target
-        injectionStatus = `\n💡 Image ready to use at path: ${htmlPath}\n   (Skipped auto-injection - image already referenced or use manually)\n`;
+        injectionStatus = `\n Image ready to use at path: ${htmlPath}\n   (Skipped auto-injection - image already referenced or use manually)\n`;
       } else {
-        injectionStatus = `\n⚠️  No suitable injection target found.\n   Use manually with: <img src="${htmlPath}" alt="${altText}" />\n`;
+        injectionStatus = `\n  No suitable injection target found.\n   Use manually with: <img src="${htmlPath}" alt="${altText}" />\n`;
       }
 
       return {
-        content: `✅ Image generated and saved successfully!
+        content: ` Image generated and saved successfully!
 
-📁 Saved to: ${finalPath}
-🌐 HTML path: ${htmlPath}${injectionStatus}
+ Saved to: ${finalPath}
+ HTML path: ${htmlPath}${injectionStatus}
 Details:
 - Prompt: "${prompt}"
 - Size: ${dalleSize}

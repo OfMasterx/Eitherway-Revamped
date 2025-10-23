@@ -35,7 +35,7 @@ if (!healthy) {
   console.error('Failed to connect to database');
   process.exit(1);
 }
-console.log('✓ Database connected\n');
+console.log(' Database connected\n');
 
 await registerSessionRoutes(fastify, db);
 await registerAppRoutes(fastify, db);
@@ -259,9 +259,9 @@ const PORT = process.env.PORT || 3001;
 
 try {
   await fastify.listen({ port: Number(PORT), host: '0.0.0.0' });
-  console.log(`\n🚀 EitherWay UI Server running on http://localhost:${PORT}`);
-  console.log(`📁 Workspace: ${WORKSPACE_DIR}`);
-  console.log(`💾 Database: Connected\n`);
+  console.log(`\n EitherWay UI Server running on http://localhost:${PORT}`);
+  console.log(` Workspace: ${WORKSPACE_DIR}`);
+  console.log(` Database: Connected\n`);
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);

@@ -87,7 +87,7 @@ Configuration:
     console.log(response);
     console.log('======================\n');
   } catch (error: any) {
-    console.error('\n❌ Error:', error.message);
+    console.error('\n Error:', error.message);
     if (error.stack) {
       console.error('\nStack trace:');
       console.error(error.stack);

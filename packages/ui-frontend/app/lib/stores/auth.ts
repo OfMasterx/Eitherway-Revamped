@@ -21,11 +21,11 @@ export class AuthStore {
   }
 
   login(user: GoogleUser, platform: string) {
-    console.log('🔐 AuthStore.login called with:', { user, platform });
+    console.log(' AuthStore.login called with:', { user, platform });
     this.user.set(user);
     this.platform.set(platform);
     this.isAuthenticated.set(true);
-    console.log('✅ AuthStore.login completed, new state:', this.authState);
+    console.log(' AuthStore.login completed, new state:', this.authState);
   }
 
   logout() {

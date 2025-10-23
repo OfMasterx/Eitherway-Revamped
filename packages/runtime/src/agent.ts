@@ -106,10 +106,10 @@ TAILWIND CSS STYLING (CRITICAL):
   - Use dark: prefix for dark mode support when appropriate
 
   AVOID THESE ANTI-PATTERNS:
-  ❌ NEVER create separate .css files
-  ❌ NEVER use inline styles (style={{...}}) - use Tailwind classes instead
-  ❌ NEVER write custom CSS rules
-  ✓ ALWAYS use Tailwind utility classes
+   NEVER create separate .css files
+   NEVER use inline styles (style={{...}}) - use Tailwind classes instead
+   NEVER write custom CSS rules
+   ALWAYS use Tailwind utility classes
 
 FILE STRUCTURE (MANDATORY):
   - index.html: Vite entry point with root div
@@ -159,16 +159,16 @@ SVG USAGE IN WEBCONTAINER (CRITICAL):
   <img src="icon.svg" alt="Icon">
 
   AVOID these patterns in WebContainer:
-  ❌ <img src="data:image/svg+xml,..."> (may be blocked by COEP/CSP)
-  ❌ background: url('data:image/svg+xml,...') (may be blocked)
-  ❌ <use xlink:href="data:..."> (explicitly blocked since Dec 2023)
+   <img src="data:image/svg+xml,..."> (may be blocked by COEP/CSP)
+   background: url('data:image/svg+xml,...') (may be blocked)
+   <use xlink:href="data:..."> (explicitly blocked since Dec 2023)
 
   Always include xmlns="http://www.w3.org/2000/svg" in SVG elements
   For icon libraries, create individual .svg files rather than data URI sprites
 
 ICONS AND VISUAL ELEMENTS (CRITICAL PRIORITY ORDER):
-  - NEVER use emojis (🚀 ❌ ✅ 💰 📊 etc.) - they are STRICTLY FORBIDDEN
-  - NEVER use Unicode symbols (•, ◆, ★, →, ✓, etc.) - they're unprofessional
+  - NEVER use emojis (     etc.) - they are STRICTLY FORBIDDEN
+  - NEVER use Unicode symbols (•, , , →, , etc.) - they're unprofessional
   - ALWAYS follow this strict priority order for icons:
 
   PRIORITY 1 - REAL ICON FILES (PREFERRED):
@@ -196,19 +196,19 @@ ICONS AND VISUAL ELEMENTS (CRITICAL PRIORITY ORDER):
   Copy the SVG code and paste it inline or save as .svg file
 
   PRIORITY 3 - EMOJIS (NEVER - STRICTLY FORBIDDEN):
-  ❌ Emojis are NEVER acceptable for UI icons
-  ❌ Unicode symbols are NEVER acceptable for UI icons
-  ❌ Text-based icons (★, →, •) are NEVER acceptable
+   Emojis are NEVER acceptable for UI icons
+   Unicode symbols are NEVER acceptable for UI icons
+   Text-based icons (, →, •) are NEVER acceptable
 
   Examples of what NOT to do:
-  ❌ <span>🚀</span> (emoji - FORBIDDEN)
-  ❌ <span>▲</span> (Unicode symbol - FORBIDDEN)
-  ❌ <span>★</span> (Unicode symbol - FORBIDDEN)
+   <span></span> (emoji - FORBIDDEN)
+   <span></span> (Unicode symbol - FORBIDDEN)
+   <span></span> (Unicode symbol - FORBIDDEN)
 
   Examples of correct approach:
-  ✓ Search for actual icon file first: web_search("free rocket icon PNG")
-  ✓ If no file found, use SVG: <svg>...rocket path...</svg>
-  ✓ Store icons in public/icons/ or public/assets/ directory
+   Search for actual icon file first: web_search("free rocket icon PNG")
+   If no file found, use SVG: <svg>...rocket path...</svg>
+   Store icons in public/icons/ or public/assets/ directory
 
   The ONLY exception: emojis in user-generated content or chat messages
   For all UI elements, navigation, buttons, features: ALWAYS use real icons or SVG, NEVER emojis
@@ -264,8 +264,8 @@ VITE CONFIGURATION (IMPORTANT):
   - If you see "Outdated Optimize Dep" errors, DO NOT fix by adding force: true
   - The correct fix is to ensure package.json is updated (which triggers automatic cache clearing)
   - Example of what NOT to do:
-    ❌ optimizeDeps: { force: true, include: ['somelib'] }  // Slows down ALL builds
-    ✓ Just add the library to package.json - cache clears automatically
+     optimizeDeps: { force: true, include: ['somelib'] }  // Slows down ALL builds
+     Just add the library to package.json - cache clears automatically
 
 VITE CROSS-ORIGIN HEADERS (CRITICAL - MANDATORY):
   When creating OR editing vite.config, you MUST ALWAYS include server headers.
@@ -289,10 +289,10 @@ VITE CROSS-ORIGIN HEADERS (CRITICAL - MANDATORY):
   })
 
   CRITICAL RULES:
-  ❌ NEVER create vite.config without server.headers section
-  ❌ NEVER use 'require-corp' for COEP - it blocks external resources
-  ✅ ALWAYS include server.headers with 'credentialless' COEP
-  ✅ If editing vite.config for any reason, PRESERVE the server.headers section
+   NEVER create vite.config without server.headers section
+   NEVER use 'require-corp' for COEP - it blocks external resources
+   ALWAYS include server.headers with 'credentialless' COEP
+   If editing vite.config for any reason, PRESERVE the server.headers section
 
 External API & CORS Handling:
   - Static resources (images, fonts, CDN scripts) in your source code are automatically rewritten to use the proxy
@@ -399,11 +399,11 @@ BRAND ASSETS (CRITICAL - HIGHEST PRIORITY):
 
   1. **ALWAYS USE EXACT PATHS PROVIDED**
      The brand kit context shows EXACT paths for all assets - use them verbatim!
-     ✅ <link rel="icon" href="/favicon.ico" />
-     ✅ <img src="/assets/logo-navbar.png" />
-     ❌ <img src="/public/assets/logo.png" /> (WRONG - no /public)
-     ❌ <img src="./assets/logo.png" /> (WRONG - use absolute paths)
-     ❌ <img src="../assets/logo.png" /> (WRONG - use absolute paths)
+      <link rel="icon" href="/favicon.ico" />
+      <img src="/assets/logo-navbar.png" />
+      <img src="/public/assets/logo.png" /> (WRONG - no /public)
+      <img src="./assets/logo.png" /> (WRONG - use absolute paths)
+      <img src="../assets/logo.png" /> (WRONG - use absolute paths)
 
   2. **FAVICON USAGE (MANDATORY)**
      - Auto-generated favicons are ready at: /favicon.ico, /favicon-32.png, /favicon-64.png, etc.
@@ -412,8 +412,8 @@ BRAND ASSETS (CRITICAL - HIGHEST PRIORITY):
        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
        <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
        <link rel="apple-touch-icon" sizes="128x128" href="/favicon-128.png" />
-     - ❌ NEVER use horizontal/vertical logos as favicons (they're the wrong shape!)
-     - ❌ NEVER use <link rel="icon" href="/assets/logo.png" /> (use favicon files only)
+     -  NEVER use horizontal/vertical logos as favicons (they're the wrong shape!)
+     -  NEVER use <link rel="icon" href="/assets/logo.png" /> (use favicon files only)
 
   3. **LOGO USAGE (FOLLOW AI ANALYSIS)**
      - Each logo has AI analysis showing: visual description, aspect ratio, theme variant, best use cases
@@ -421,10 +421,10 @@ BRAND ASSETS (CRITICAL - HIGHEST PRIORITY):
      - CHECK the "Background" field (light/dark/neutral) to match navbar/footer background
      - USE -navbar.png variants for navigation (pre-optimized size ~64px height)
      - Example: If analysis says "horizontal blue wordmark on light background":
-       ✅ Use on white/light navbars
-       ❌ Don't use on dark navbars (wrong contrast)
-       ✅ Use horizontal layout (navbar/footer)
-       ❌ Don't crop to square or use vertically
+        Use on white/light navbars
+        Don't use on dark navbars (wrong contrast)
+        Use horizontal layout (navbar/footer)
+        Don't crop to square or use vertically
      - Follow "Best for" recommendations (navbar, footer, hero, etc.)
      - AVOID contexts listed in "Avoid" or "notSuitableFor"
 
@@ -439,14 +439,14 @@ BRAND ASSETS (CRITICAL - HIGHEST PRIORITY):
      - Example workflow:
        1. Copy @font-face declarations from brand kit context → src/index.css
        2. Apply to elements: h1 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
-       3. ❌ NEVER use font-family without @font-face import first
+       3.  NEVER use font-family without @font-face import first
 
   5. **VIDEO USAGE**
      - Videos have been analyzed for duration and recommended usage
      - Short videos (<10s): Use with autoplay loop muted playsinline (background videos)
      - Long videos (>10s): Use with controls, NO autoplay (respect user preferences)
      - The brand kit provides ready-to-use <video> HTML snippets
-     - ❌ NEVER autoplay videos with sound
+     -  NEVER autoplay videos with sound
 
   6. **BRAND COLOR PALETTE**
      - Colors are extracted from brand assets and sorted by prominence
@@ -454,10 +454,10 @@ BRAND ASSETS (CRITICAL - HIGHEST PRIORITY):
      - SECONDARY color (second): Use for secondary buttons, hover states, accents
      - ACCENT colors: Use for subtle highlights, borders, backgrounds
      - Example: If PRIMARY is #2563EB:
-       ✅ <button className="bg-[#2563EB] hover:bg-[#1d4ed8]">
-       ✅ <a className="text-[#2563EB] hover:underline">
-       ❌ Don't use random colors that aren't in the brand palette
-       ❌ Don't use accent colors for primary CTAs
+        <button className="bg-[#2563EB] hover:bg-[#1d4ed8]">
+        <a className="text-[#2563EB] hover:underline">
+        Don't use random colors that aren't in the brand palette
+        Don't use accent colors for primary CTAs
 
   7. **VARIANT INTELLIGENCE**
      - Assets have multiple variants: favicon, navbar, hero, thumbnail, original
@@ -483,25 +483,25 @@ BRAND ASSETS (CRITICAL - HIGHEST PRIORITY):
      - Don't improvise paths or attributes - use what's provided
 
   10. **COMMON MISTAKES TO AVOID**
-      ❌ Using /public/assets/logo.png instead of /assets/logo.png
-      ❌ Using horizontal logo for favicon
-      ❌ Using font-family without @font-face
-      ❌ Ignoring theme variant (light logo on dark background or vice versa)
-      ❌ Using original high-res files instead of optimized variants
-      ❌ Autoplay videos with sound
-      ❌ Skipping favicon links in <head>
-      ❌ Using wrong aspect ratio (horizontal logo in square context)
+       Using /public/assets/logo.png instead of /assets/logo.png
+       Using horizontal logo for favicon
+       Using font-family without @font-face
+       Ignoring theme variant (light logo on dark background or vice versa)
+       Using original high-res files instead of optimized variants
+       Autoplay videos with sound
+       Skipping favicon links in <head>
+       Using wrong aspect ratio (horizontal logo in square context)
 
   **VERIFICATION CHECKLIST:**
   Before completing your work, verify:
-  ✓ Favicons added to <head> in index.html
-  ✓ @font-face declarations in src/index.css if using custom fonts
-  ✓ Logo paths match exactly what's in brand kit context
-  ✓ Logo background theme matches navbar/footer background
-  ✓ Using optimized variants (not always original files)
-  ✓ Brand colors used for CTAs and primary elements
-  ✓ No horizontal logos used as favicons
-  ✓ All paths are absolute (/assets/...) not relative (./assets/...)
+   Favicons added to <head> in index.html
+   @font-face declarations in src/index.css if using custom fonts
+   Logo paths match exactly what's in brand kit context
+   Logo background theme matches navbar/footer background
+   Using optimized variants (not always original files)
+   Brand colors used for CTAs and primary elements
+   No horizontal logos used as favicons
+   All paths are absolute (/assets/...) not relative (./assets/...)
 
   **PRIORITY HIERARCHY:**
   1. BRAND ASSETS > Generated images > Fetched images
@@ -914,7 +914,7 @@ export class Agent {
         const missingRefs = await this.checkMissingFileReferences(toolUses, createdFilesThisTurn, toolResults);
         if (missingRefs.length > 0) {
           // Add warning to the last tool result to inform the agent
-          const warningMessage = `\n\n⚠️ WARNING: Missing file references detected:\n${missingRefs.map((ref) => `  - ${ref.htmlFile} references <${ref.tag} ${ref.attr}="${ref.file}"> but ${ref.file} was not created`).join('\n')}\n\nYou MUST create these files in your next response to make the app functional.`;
+          const warningMessage = `\n\n WARNING: Missing file references detected:\n${missingRefs.map((ref) => `  - ${ref.htmlFile} references <${ref.tag} ${ref.attr}="${ref.file}"> but ${ref.file} was not created`).join('\n')}\n\nYou MUST create these files in your next response to make the app functional.`;
 
           // Append warning to the last tool result
           if (toolResults.length > 0) {
@@ -1037,7 +1037,7 @@ export class Agent {
     this.conversationHistory.forEach((msg, idx) => {
       // Validate that content is always an array (Claude API requirement)
       if (!Array.isArray(msg.content)) {
-        console.error(`\n❌ CONVERSATION HISTORY VALIDATION ERROR:`);
+        console.error(`\n CONVERSATION HISTORY VALIDATION ERROR:`);
         console.error(`   Message [${idx}] (role: ${msg.role}) has non-array content`);
         console.error(`   Content type: ${typeof msg.content}`);
         console.error(`   Content value:`, msg.content);
@@ -1055,7 +1055,7 @@ export class Agent {
       if (msg.content.length === 0) {
         const isFinalAssistant = idx === this.conversationHistory.length - 1 && msg.role === 'assistant';
         if (!isFinalAssistant) {
-          console.error(`\n❌ CONVERSATION HISTORY VALIDATION ERROR:`);
+          console.error(`\n CONVERSATION HISTORY VALIDATION ERROR:`);
           console.error(`   Message [${idx}] (role: ${msg.role}) has empty content array`);
           console.error(`\n   Claude API requires all messages to have non-empty content,`);
           console.error(`   except for the optional final assistant message.`);
@@ -1091,7 +1091,7 @@ export class Agent {
 
             if (!hasMatchingResult) {
               console.error(
-                `\n⚠️  WARNING: Message [${idx}] has server_tool_use (${stu.id}) without web_search_tool_result`,
+                `\n  WARNING: Message [${idx}] has server_tool_use (${stu.id}) without web_search_tool_result`,
               );
               console.error(`   This might cause issues, but continuing anyway for debugging...`);
               console.error('');
