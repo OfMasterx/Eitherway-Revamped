@@ -923,10 +923,16 @@ export async function registerBrandKitRoutes(
                asset.processing_status === 'completed';
       });
 
-      await colorsRepo.deleteByBrandKitId(brandKitId);
+      // Only delete extracted colors, preserve manually added ones
+      const existingColors = await colorsRepo.findByBrandKitId(brandKitId);
+      for (const color of existingColors) {
+        if (color.color_role === 'extracted') {
+          await colorsRepo.delete(color.id);
+        }
+      }
 
       if (imageAssets.length === 0) {
-        console.log('[Brand Kits API] No image assets to process - colors cleared');
+        console.log('[Brand Kits API] No image assets to process - extracted colors cleared, manual colors preserved');
         return {
           success: true,
           message: 'No image assets available for color extraction',

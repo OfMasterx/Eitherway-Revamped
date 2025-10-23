@@ -488,6 +488,39 @@ await fastify.register(async (fastify) => {
       return;
     }
 
+    /**
+     * Detect if the user request is for research/information vs app generation
+     * @param prompt - The user's input message
+     * @returns 'research' if requesting information, 'build' if requesting app generation
+     */
+    function detectRequestIntent(prompt: string): 'research' | 'build' {
+      const researchIndicators = [
+        /^research\b/i, /^document\b/i, /^explain\b/i, /^what (is|are|does|do)\b/i,
+        /^how (does|do|can|to)\b/i, /^compare\b/i, /^analyze\b/i, /^list (the )?(top|best)\b/i,
+        /^tell me about\b/i, /^describe\b/i, /^find information\b/i,
+        /\binformation (about|on)\b/i, /\bdetails (on|about)\b/i,
+        /^provide (a |an )?(list|overview|summary)\b/i, /^give me (a |an )?(list|overview)\b/i,
+        /^show me (the )?(top|best|latest)\b/i, /^who (is|are|was|were)\b/i,
+        /^when (did|was|were)\b/i, /^where (is|are|can|do)\b/i, /^why (is|are|does|do)\b/i
+      ];
+
+      const buildIndicators = [
+        /^(create|build|make|develop|generate)\b/i,
+        /(app|website|dashboard|interface|component|page|site) (for|to|that|with)\b/i,
+        /^i (need|want) (a|an) (app|website|dashboard|site|page)\b/i
+      ];
+
+      // Check research indicators first
+      if (researchIndicators.some(pattern => pattern.test(prompt))) {
+        // Make sure it's not also a build request (e.g., "research app" or "create research dashboard")
+        if (!buildIndicators.some(pattern => pattern.test(prompt))) {
+          return 'research';
+        }
+      }
+
+      return 'build';
+    }
+
     connection.socket.on('message', async (message: Buffer) => {
       const data = JSON.parse(message.toString());
 
@@ -495,6 +528,10 @@ await fastify.register(async (fastify) => {
         try {
           let response: string;
           let messageId!: string; // Declare at top level, will be assigned in callback or immediately
+
+          // Detect request intent
+          const requestIntent = detectRequestIntent(data.prompt);
+          const isResearchMode = requestIntent === 'research';
 
           // Use DatabaseAgent when in database mode
           if (!USE_LOCAL_FS && dbConnected && db && sessionId) {
@@ -528,12 +565,36 @@ await fastify.register(async (fastify) => {
               agentConfig,
               executors: getAllExecutors(),
               dryRun: false,
-              webSearch: agentConfig.tools.webSearch,
+              webSearch: isResearchMode ? true : agentConfig.tools.webSearch, // Force enable web search in research mode
             });
 
             // Set database context for file operations
             if (session.app_id) {
               dbAgent.setDatabaseContext(fileStore, session.app_id, sessionId);
+            }
+
+            // Inject research mode system prompt if needed
+            if (isResearchMode) {
+              const researchModePrompt = `🔍 RESEARCH MODE ACTIVE
+
+The user is requesting INFORMATION/RESEARCH, not code or application generation.
+
+Your task is to provide a comprehensive, well-researched answer:
+1. Use web_search tool to find accurate, current information from reliable sources
+2. Synthesize information from multiple sources for completeness
+3. Provide a clear, well-structured markdown answer with:
+   - Headings and subheadings for organization
+   - Bullet points or numbered lists for readability
+   - **Bold** for emphasis on key points
+   - Code blocks for technical details (if applicable)
+   - Citations or source references when helpful
+4. DO NOT use file manipulation tools (either-write, either-line-replace)
+5. DO NOT create any files or generate code unless specifically requested
+6. Focus on accuracy, completeness, and clarity
+
+Remember: The user wants an ANSWER with information, not an application or code.`;
+
+              dbAgent.setSystemPromptPrefix(researchModePrompt);
             }
 
             // Message ID will be set when DatabaseAgent creates the message
@@ -595,8 +656,32 @@ await fastify.register(async (fastify) => {
               agentConfig,
               executors: getAllExecutors(),
               dryRun: false,
-              webSearch: agentConfig.tools.webSearch,
+              webSearch: isResearchMode ? true : agentConfig.tools.webSearch, // Force enable web search in research mode
             });
+
+            // Inject research mode system prompt if needed
+            if (isResearchMode) {
+              const researchModePrompt = `🔍 RESEARCH MODE ACTIVE
+
+The user is requesting INFORMATION/RESEARCH, not code or application generation.
+
+Your task is to provide a comprehensive, well-researched answer:
+1. Use web_search tool to find accurate, current information from reliable sources
+2. Synthesize information from multiple sources for completeness
+3. Provide a clear, well-structured markdown answer with:
+   - Headings and subheadings for organization
+   - Bullet points or numbered lists for readability
+   - **Bold** for emphasis on key points
+   - Code blocks for technical details (if applicable)
+   - Citations or source references when helpful
+4. DO NOT use file manipulation tools (either-write, either-line-replace)
+5. DO NOT create any files or generate code unless specifically requested
+6. Focus on accuracy, completeness, and clarity
+
+Remember: The user wants an ANSWER with information, not an application or code.`;
+
+              agent.setSystemPromptPrefix(researchModePrompt);
+            }
 
             // For local filesystem mode, use UUID as messageId (no database)
             messageId = randomUUID();

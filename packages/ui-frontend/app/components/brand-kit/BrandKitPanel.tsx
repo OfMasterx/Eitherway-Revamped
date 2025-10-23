@@ -8,6 +8,7 @@ import { createScopedLogger } from '~/utils/logger';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CategoryTabs, type AssetCategory } from './CategoryTabs';
 import { AssetCard } from './AssetCard';
+import { BACKEND_URL } from '~/config/api';
 
 const logger = createScopedLogger('BrandKitPanel');
 
@@ -75,6 +76,10 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
   const [activeCategory, setActiveCategory] = useState<AssetCategory>('logos');
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
+  const [editingColor, setEditingColor] = useState<BrandColor | null>(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [newColorHex, setNewColorHex] = useState('#000000');
+  const [deletingColorId, setDeletingColorId] = useState<string | null>(null);
 
   const userId = (isConnected && address ? address : user?.email) || null;
 
@@ -107,7 +112,7 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
 
   const fetchBrandKitData = async (brandKitId: string) => {
     try {
-      const response = await fetch(`/api/brand-kits/${brandKitId}`);
+      const response = await fetch(`${BACKEND_URL}/api/brand-kits/${brandKitId}`);
       if (!response.ok) throw new Error('Failed to fetch brand kit data');
 
       const data = await response.json();
@@ -129,14 +134,14 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
       setDeletingAssetId(assetId);
       setGlobalMessage(`Deleting ${fileName}...`);
 
-      const deleteResponse = await fetch(`/api/brand-kits/${currentBrandKitId}/assets/${assetId}`, {
+      const deleteResponse = await fetch(`${BACKEND_URL}/api/brand-kits/${currentBrandKitId}/assets/${assetId}`, {
         method: 'DELETE',
       });
 
       if (!deleteResponse.ok) throw new Error(`Failed to delete asset`);
 
       // Re-aggregate colors
-      await fetch(`/api/brand-kits/${currentBrandKitId}/aggregate-colors`, {
+      await fetch(`${BACKEND_URL}/api/brand-kits/${currentBrandKitId}/aggregate-colors`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -195,7 +200,7 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
         // Pass the intended category to the backend
         formData.append('category', category || activeCategory);
 
-        const uploadResponse = await fetch(`/api/brand-kits/${brandKitId}/assets`, {
+        const uploadResponse = await fetch(`${BACKEND_URL}/api/brand-kits/${brandKitId}/assets`, {
           method: 'POST',
           body: formData,
         });
@@ -205,7 +210,7 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
 
       // Aggregate colors
       setGlobalMessage('Extracting brand colors...');
-      await fetch(`/api/brand-kits/${brandKitId}/aggregate-colors`, {
+      await fetch(`${BACKEND_URL}/api/brand-kits/${brandKitId}/aggregate-colors`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -251,6 +256,92 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
   };
 
   const filteredAssets = getFilteredAssets();
+
+  const handleAddColor = async () => {
+    if (!currentBrandKitId) {
+      setError('Please create a brand kit first');
+      return;
+    }
+
+    try {
+      setGlobalMessage('Adding color...');
+      const response = await fetch(`${BACKEND_URL}/api/brand-kits/${currentBrandKitId}/colors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ colorHex: newColorHex }),
+      });
+
+      if (!response.ok) throw new Error('Failed to add color');
+
+      await fetchBrandKitData(currentBrandKitId);
+      setGlobalMessage('✓ Color added');
+      setShowColorPicker(false);
+      setNewColorHex('#000000');
+      setTimeout(() => setGlobalMessage(null), 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to add color');
+      setGlobalMessage(null);
+    }
+  };
+
+  const handleUpdateColor = async (colorId: string, newHex: string) => {
+    if (!currentBrandKitId) return;
+
+    try {
+      setGlobalMessage('Updating color...');
+      const response = await fetch(`${BACKEND_URL}/api/brand-kits/${currentBrandKitId}/colors/${colorId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ colorHex: newHex }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update color');
+
+      await fetchBrandKitData(currentBrandKitId);
+      setGlobalMessage('✓ Color updated');
+      setShowColorPicker(false);
+      setEditingColor(null);
+      setTimeout(() => setGlobalMessage(null), 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update color');
+      setGlobalMessage(null);
+    }
+  };
+
+  const handleDeleteColor = async (colorId: string) => {
+    if (!currentBrandKitId || !confirm('Delete this color?')) return;
+
+    try {
+      setDeletingColorId(colorId);
+      setGlobalMessage('Deleting color...');
+
+      const response = await fetch(`${BACKEND_URL}/api/brand-kits/${currentBrandKitId}/colors/${colorId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete color');
+
+      await fetchBrandKitData(currentBrandKitId);
+      setGlobalMessage('✓ Color deleted');
+      setTimeout(() => setGlobalMessage(null), 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete color');
+      setGlobalMessage(null);
+    } finally {
+      setDeletingColorId(null);
+    }
+  };
+
+  const openColorPicker = (color?: BrandColor) => {
+    if (color) {
+      setEditingColor(color);
+      setNewColorHex(color.hex);
+    } else {
+      setEditingColor(null);
+      setNewColorHex('#000000');
+    }
+    setShowColorPicker(true);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -322,47 +413,54 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
         {/* Gallery Grid */}
         <div className="flex-1 overflow-y-auto p-6">
           {filteredAssets.length === 0 ? (
-            /* Empty State with centered + button */
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-              <input
-                type="file"
-                id="gallery-upload"
-                className="hidden"
-                accept={
-                  activeCategory === 'fonts' ? '.ttf,.otf,.woff,.woff2' :
-                  activeCategory === 'videos' ? '.mp4,video/mp4' :
-                  'image/png,image/jpeg,image/jpg,image/svg+xml,image/x-icon,.ico'
-                }
-                multiple
-                onChange={(e) => handleFileUpload(e.target.files, activeCategory)}
-                disabled={isUploading || agentWorking}
-              />
-              <label
-                htmlFor="gallery-upload"
-                className={`relative group bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-600 hover:border-blue-500 transition-all cursor-pointer flex items-center justify-center w-64 h-64 mb-6 ${
-                  isUploading || agentWorking ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                <div className="text-center p-6">
-                  <div className="i-ph:plus text-7xl text-gray-500 group-hover:text-blue-400 transition-colors mb-4" />
-                  <p className="text-base font-medium text-gray-400 group-hover:text-blue-300 transition-colors">
-                    {isUploading ? 'Uploading...' : `Add ${activeCategory}`}
+            /* Empty State centered horizontally */
+            <div className="flex items-center justify-center h-full">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  id="gallery-upload"
+                  className="hidden"
+                  accept={
+                    activeCategory === 'fonts' ? '.ttf,.otf,.woff,.woff2' :
+                    activeCategory === 'videos' ? '.mp4,video/mp4' :
+                    'image/png,image/jpeg,image/jpg,image/svg+xml,image/x-icon,.ico'
+                  }
+                  multiple
+                  onChange={(e) => handleFileUpload(e.target.files, activeCategory)}
+                  disabled={isUploading || agentWorking}
+                />
+                {/* Add Asset Card (Plus Icon) */}
+                <label
+                  htmlFor="gallery-upload"
+                  className={`relative group bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-600 hover:border-blue-500 transition-all cursor-pointer w-[180px] h-[180px] flex-shrink-0 ${
+                    isUploading || agentWorking ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="i-ph:plus text-5xl text-gray-500 group-hover:text-blue-400 transition-colors mb-2" />
+                    <p className="text-xs font-medium text-gray-400 group-hover:text-blue-300 transition-colors">
+                      {isUploading ? 'Uploading...' : `Add`}
+                    </p>
+                  </div>
+                </label>
+
+                {/* Empty State Text Card */}
+                <div className="flex flex-col items-center justify-center text-center w-[180px] h-[180px]">
+                  <div className="text-4xl text-gray-600 mb-2">
+                    {activeCategory === 'icons' && <div className="i-ph:app-window" />}
+                    {activeCategory === 'logos' && <div className="i-ph:image" />}
+                    {activeCategory === 'images' && <div className="i-ph:images" />}
+                    {activeCategory === 'fonts' && <div className="i-ph:text-aa" />}
+                    {activeCategory === 'videos' && <div className="i-ph:video" />}
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-300 mb-1">
+                    No {activeCategory} yet
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Click the + button to upload
                   </p>
                 </div>
-              </label>
-              <div className="text-6xl text-gray-700 mb-3">
-                {activeCategory === 'icons' && <div className="i-ph:app-window" />}
-                {activeCategory === 'logos' && <div className="i-ph:image" />}
-                {activeCategory === 'images' && <div className="i-ph:images" />}
-                {activeCategory === 'fonts' && <div className="i-ph:text-aa" />}
-                {activeCategory === 'videos' && <div className="i-ph:video" />}
               </div>
-              <h3 className="text-xl font-semibold text-gray-300 mb-2">
-                No {activeCategory} yet
-              </h3>
-              <p className="text-sm text-gray-400 max-w-md">
-                Click the + button above to upload your {activeCategory}
-              </p>
             </div>
           ) : (
             /* Horizontal gallery with + button on the left */
@@ -410,22 +508,147 @@ export function BrandKitPanel({ onClose }: BrandKitPanelProps) {
           )}
         </div>
 
-        {/* Color Palette Footer */}
-        {brandKitData && brandKitData.colors.length > 0 && (
+        {/* Color Management Footer */}
+        {brandKitData && (
           <div className="border-t border-gray-700 p-6 bg-gray-800/50">
-            <h4 className="text-sm font-semibold text-gray-300 mb-3">Brand Colors</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {brandKitData.colors.slice(0, 12).map((color) => (
-                <div key={color.id} className="flex flex-col items-center flex-shrink-0">
-                  <div
-                    className="w-10 h-10 rounded-lg border-2 border-gray-600"
-                    style={{ backgroundColor: color.hex }}
-                    title={color.name || color.hex}
-                  />
-                  <p className="text-xs text-gray-400 mt-1">{color.hex}</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold text-gray-300">Brand Colors</h4>
+              <button
+                onClick={() => openColorPicker()}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <div className="i-ph:plus text-sm" />
+                Add Color
+              </button>
             </div>
+
+            {brandKitData.colors.length > 0 ? (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {brandKitData.colors.map((color) => (
+                  <motion.div
+                    key={color.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="flex flex-col items-center flex-shrink-0 relative group"
+                  >
+                    <button
+                      onClick={() => openColorPicker(color)}
+                      className="w-16 h-16 rounded-xl border-2 border-gray-600 hover:border-blue-400 transition-all cursor-pointer shadow-lg hover:shadow-xl transform hover:scale-105"
+                      style={{ backgroundColor: color.hex }}
+                      title={`${color.name || 'Click to edit'} - ${color.hex}`}
+                    />
+                    <p className="text-xs text-gray-400 mt-1.5 font-mono">{color.hex}</p>
+                    {color.name && (
+                      <p className="text-xs text-gray-500 truncate max-w-[64px]">{color.name}</p>
+                    )}
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteColor(color.id);
+                      }}
+                      disabled={deletingColorId === color.id}
+                      className="absolute -top-1 -right-1 p-1 bg-red-600/90 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                      title="Delete color"
+                    >
+                      {deletingColorId === color.id ? (
+                        <div className="i-ph:spinner text-white text-xs animate-spin" />
+                      ) : (
+                        <div className="i-ph:x text-white text-xs" />
+                      )}
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No colors yet. Colors are extracted from uploaded images, or you can add them manually.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Color Picker Modal */}
+        {showColorPicker && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gray-800 rounded-2xl shadow-2xl p-6 max-w-md w-full border-2 border-gray-700"
+            >
+              <h3 className="text-xl font-bold text-white mb-4">
+                {editingColor ? 'Edit Color' : 'Add Color'}
+              </h3>
+
+              <div className="space-y-4">
+                {/* Color Preview */}
+                <div className="flex gap-4 items-center">
+                  <div
+                    className="w-24 h-24 rounded-xl border-2 border-gray-600 shadow-inner"
+                    style={{ backgroundColor: newColorHex }}
+                  />
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Select Color
+                    </label>
+                    <input
+                      type="color"
+                      value={newColorHex}
+                      onChange={(e) => setNewColorHex(e.target.value)}
+                      className="w-full h-12 rounded-lg cursor-pointer border-2 border-gray-600 bg-gray-900"
+                    />
+                  </div>
+                </div>
+
+                {/* Hex Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Hex Code
+                  </label>
+                  <input
+                    type="text"
+                    value={newColorHex}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                        setNewColorHex(val);
+                      }
+                    }}
+                    placeholder="#000000"
+                    className="w-full px-4 py-2 bg-gray-900 border-2 border-gray-600 rounded-lg text-white font-mono focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowColorPicker(false);
+                      setEditingColor(null);
+                    }}
+                    className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (editingColor) {
+                        handleUpdateColor(editingColor.id, newColorHex);
+                      } else {
+                        handleAddColor();
+                      }
+                    }}
+                    disabled={!/^#[0-9A-Fa-f]{6}$/.test(newColorHex)}
+                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+                  >
+                    {editingColor ? 'Update' : 'Add'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>
