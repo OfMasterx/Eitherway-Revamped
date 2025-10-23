@@ -10,6 +10,7 @@
     "start": "node --env-file=../../.env dist/server.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@eitherway/database": "workspace:*",
     "@eitherway/runtime": "workspace:*",
     "@eitherway/tools-impl": "workspace:*",

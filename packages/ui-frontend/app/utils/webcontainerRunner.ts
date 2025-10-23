@@ -11,8 +11,9 @@ import { ensureDevHeaders } from '~/lib/webcontainer/ensure-dev-headers';
 import { PREVIEW_REGISTRATION_TIMEOUT_MS, WEBCONTAINER_DEFAULT_PORT } from './constants';
 import type { WebContainerProcess, ExtendedWebContainer } from '~/types/webcontainer';
 import serverTemplate from '~/templates/webcontainer-server.template.js?raw';
-import { getSessionRoot, validateSessionOperation } from '~/lib/stores/sessionContext';
+import { getSessionRoot, validateSessionOperation, sessionContext } from '~/lib/stores/sessionContext';
 import { getWebContainerUnsafe } from '~/lib/webcontainer';
+import { validateCodeWithAI, applyAIFixes } from './aiCodeValidator';
 
 const logger = createScopedLogger('WebContainerRunner');
 
@@ -548,6 +549,64 @@ export async function runDevServer(webcontainer: WebContainer, files: any[]): Pr
       // Note: ensureDevHeaders is now called at the top of runDevServer
       // to fix the issue where agent overwrites vite.config
       // No proxy setup needed - external resources load directly with COEP headers
+
+      // Validate and auto-fix code using AI before running
+      logger.info('Validating and auto-fixing code with AI...');
+      try {
+        // Collect code files for validation
+        const filesToValidate = new Map<string, string>();
+        async function collectFiles(dir: string) {
+          try {
+            const entries = await wc.fs.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+              const fullPath = `${dir}/${entry.name}`;
+              if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+
+              if (entry.isDirectory()) {
+                await collectFiles(fullPath);
+              } else if (
+                entry.name.endsWith('.jsx') ||
+                entry.name.endsWith('.tsx') ||
+                entry.name.endsWith('.js') ||
+                entry.name.endsWith('.ts') ||
+                entry.name === 'index.html' ||
+                entry.name === 'vite.config.js'
+              ) {
+                const content = await wc.fs.readFile(fullPath, 'utf8');
+                const relativePath = fullPath.replace(sessionRoot + '/', '');
+                filesToValidate.set(relativePath, content);
+              }
+            }
+          } catch (e) {
+            logger.debug(`Cannot read directory ${dir}:`, e);
+          }
+        }
+
+        await collectFiles(sessionRoot);
+
+        // Get session ID from context
+        const { currentSessionId } = sessionContext.get();
+
+        if (filesToValidate.size > 0 && currentSessionId) {
+          const result = await validateCodeWithAI(filesToValidate, currentSessionId);
+
+          // Apply fixes if any
+          const fixCount = Object.keys(result.fixedFiles || {}).length;
+          if (fixCount > 0) {
+            const applied = await applyAIFixes(wc, sessionRoot, result.fixedFiles);
+            logger.info(`AI auto-fixed ${applied}/${fixCount} files`);
+          }
+
+          // Log critical errors
+          const criticalErrors = result.issues.filter(i => i.severity === 'error' && !i.autoFixed);
+          if (criticalErrors.length > 0) {
+            logger.warn('Critical errors found:', criticalErrors);
+          }
+        }
+      } catch (error) {
+        logger.error('AI validation failed:', error);
+        // Continue with installation even if validation fails
+      }
 
       logger.info('Installing dependencies in session:', sessionRoot);
 
